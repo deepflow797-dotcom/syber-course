@@ -46,16 +46,20 @@ export function install(ctx) {
 
     prefillCustomer();
 
+    function fillIfEmpty(id, value) {
+      const el = $(id);
+      if (el && !el.value) el.value = value || "";
+    }
+
     function prefillCustomer() {
       const signedCustomer = ctx.R.getCustomer();
       if (!signedCustomer) return;
-      if ($("co-name") && !$("co-name").value) $("co-name").value = signedCustomer.name || "";
-      if ($("co-phone") && !$("co-phone").value) $("co-phone").value = digits(signedCustomer.phone).slice(-8);
-      if ($("co-email") && !$("co-email").value) $("co-email").value = signedCustomer.email || "";
+      fillIfEmpty("co-name", signedCustomer.name);
+      fillIfEmpty("co-phone", digits(signedCustomer.phone).slice(-8));
+      fillIfEmpty("co-email", signedCustomer.email);
       const savedAddress = (signedCustomer.addresses || [])[0];
       if (!savedAddress) return;
-      if ($("co-address") && !$("co-address").value)
-        $("co-address").value = savedAddress.address || savedAddress.line1 || "";
+      fillIfEmpty("co-address", savedAddress.address || savedAddress.line1);
       if ($("co-city") && savedAddress.cityId) $("co-city").value = savedAddress.cityId;
       refresh();
     }
@@ -178,7 +182,18 @@ export function install(ctx) {
       }, 1100);
     }
 
-    $("place-order")?.addEventListener("click", async () => {
+    function rejectOrder(verdict) {
+      ctx.toast(ctx.t(verdict.code));
+      if (verdict.focus) $(verdict.focus)?.focus();
+    }
+
+    function restoreButton(btn) {
+      if (!btn) return;
+      btn.disabled = false;
+      btn.innerHTML = btn.dataset.label || ctx.t("placeOrder");
+    }
+
+    async function placeOrder() {
       const form = readForm();
       const phone = normalizePhone(form.phone);
       const verdict = validateCheckout({
@@ -188,11 +203,7 @@ export function install(ctx) {
         rateLimitSeconds: ctx.SET.rateLimitSeconds,
         lastOrderAt: Number(localStorage.getItem(`restore_last_order_${phone}`) || 0)
       });
-      if (!verdict.ok) {
-        ctx.toast(ctx.t(verdict.code));
-        if (verdict.focus) $(verdict.focus)?.focus();
-        return;
-      }
+      if (!verdict.ok) return rejectOrder(verdict);
       const btn = lockButton();
       try {
         const calc = totals();
@@ -211,12 +222,11 @@ export function install(ctx) {
       } catch (error) {
         console.error("Restore: checkout failed", error);
         ctx.toast(String(error?.message || ctx.t("required") || "Error"));
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = btn.dataset.label || ctx.t("placeOrder");
-        }
+        restoreButton(btn);
       }
-    });
+    }
+
+    $("place-order")?.addEventListener("click", placeOrder);
 
     refresh();
   }

@@ -133,12 +133,9 @@ export function fillTemplate(template, values) {
   return message;
 }
 
-/** Builds the WhatsApp message for an order using the store template and the store's language. */
-export function buildOrderMessage(ctx, order, draft, form) {
-  const payName = ctx.L(order.payment?.name || draft.payment.name);
-  const cityName = ctx.L(order.customer?.city || draft.customer.city);
-  const template = ctx.SET.orderTemplate?.[ctx.R.lang] || ctx.SET.orderTemplate?.ar || "";
-  const values = {
+/** Values injected in the store's WhatsApp template for an order. */
+export function orderTemplateValues(ctx, order, draft, form, payName, cityName) {
+  return {
     store: ctx.L(ctx.SET.storeName),
     order_id: order.id,
     name: draft.customer.name,
@@ -153,6 +150,14 @@ export function buildOrderMessage(ctx, order, draft, form) {
     total: ctx.money(order.total),
     notes: form.notes || (ctx.R.lang === "ar" ? "لا توجد" : "Aucune")
   };
+}
+
+/** Builds the WhatsApp message for an order using the store template and the store's language. */
+export function buildOrderMessage(ctx, order, draft, form) {
+  const payName = ctx.L(order.payment?.name || draft.payment.name);
+  const cityName = ctx.L(order.customer?.city || draft.customer.city);
+  const template = ctx.SET.orderTemplate?.[ctx.R.lang] || ctx.SET.orderTemplate?.ar || "";
+  const values = orderTemplateValues(ctx, order, draft, form, payName, cityName);
   return { message: fillTemplate(template, values), payName, cityName };
 }
 

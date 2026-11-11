@@ -24,20 +24,20 @@ export function install(ctx) {
             <p class="form-note">${ctx.dt("يُعرض العد التنازلي تلقائيًا حتى تاريخ النهاية. الكود يُطبق عند اختيار الدفع عبر بنكيلي.", "Le compte à rebours s’affiche jusqu’à la date de fin. Le code s’applique avec Bankily.")}</p>
           </div></article>
           <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("معاينة العرض", "Aperçu de l’offre")}</h3></div><div class="dash-card-body">
-            <div style="border-radius:14px;padding:24px;background:linear-gradient(135deg,#15151d,#3b2235);color:#fff">
-              <span style="font-size:9px;letter-spacing:.1em;color:#ffb38b">BANKILY · -10%</span>
-              <h3 style="font-size:21px;margin:9px 0 7px;line-height:1.2">${ctx.esc(ctx.lng(offer.title))}</h3>
-              <p style="font-size:10px;color:rgba(255,255,255,.65);line-height:1.6">${ctx.esc(ctx.lng(offer.subtitle))}</p>
-              <span style="display:inline-block;margin-top:13px;border:1px dashed rgba(255,255,255,.4);padding:7px 10px;border-radius:7px;font-size:11px;letter-spacing:.12em">${ctx.esc(offer.code || "BANKILY10")}</span>
+            <div class="u-hero-gradient">
+              <span class="u-fs-9 u-ls-1 u-warm">BANKILY · -10%</span>
+              <h3 class="u-fs-21 u-my-7 u-lh-12">${ctx.esc(ctx.lng(offer.title))}</h3>
+              <p class="u-fs-10 u-dim u-lh-16">${ctx.esc(ctx.lng(offer.subtitle))}</p>
+              <span class="u-dashed-badge u-mt-13">${ctx.esc(offer.code || "BANKILY10")}</span>
             </div>
-            <p class="form-note" style="margin-top:10px">${ctx.dt("ينتهي", "Se termine")}: ${ctx.esc(offer.endsAt ? ctx.fmtDateTime(offer.endsAt) : "—")}</p>
+            <p class="form-note u-mt-10">${ctx.dt("ينتهي", "Se termine")}: ${ctx.esc(offer.endsAt ? ctx.fmtDateTime(offer.endsAt) : "—")}</p>
           </div></article>
         </div>
       </div>
       <div class="dash-panel" data-dash-panel="marketing-coupons">
         <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("كوبونات الخصم", "Coupons")}</h3><button data-action="add-coupon">${ctx.icon("plus")} ${ctx.dt("كوبون جديد", "Nouveau coupon")}</button></div><div class="dash-card-body">
           <div class="dash-table-wrap"><table class="dash-table"><thead><tr><th>${ctx.dt("الكود", "Code")}</th><th>${ctx.dt("النوع", "Type")}</th><th>${ctx.dt("القيمة", "Valeur")}</th><th>${ctx.dt("الحد الأدنى", "Minimum")}</th><th>${ctx.dt("الانتهاء", "Expiration")}</th><th>${ctx.dt("نشط", "Actif")}</th><th></th></tr></thead><tbody>
-            ${(ctx.model.settings.coupons || []).map((coupon, index) => `<tr><td><strong style="direction:ltr">${ctx.esc(coupon.code)}</strong></td><td>${coupon.type === "percent" ? ctx.dt("نسبة", "Pourcentage") : ctx.dt("ثابت", "Fixe")}</td><td>${coupon.type === "percent" ? `${coupon.value}%` : ctx.money(coupon.value)}</td><td>${ctx.money(coupon.minTotal || 0)}</td><td>${coupon.expiresAt ? ctx.esc(ctx.fmtDate(coupon.expiresAt)) : "—"}</td><td><label class="toggle"><input type="checkbox" data-coupon-active="${index}" ${coupon.active !== false ? "checked" : ""}><span></span></label></td><td><div class="cell-actions"><button class="btn btn-sm btn-soft" data-action="edit-coupon" data-index="${index}">${ctx.icon("edit")}</button><button class="btn btn-sm btn-soft" data-action="delete-coupon" data-index="${index}">${ctx.icon("trash")}</button></div></td></tr>`).join("")}
+            ${(ctx.model.settings.coupons || []).map((coupon, index) => `<tr><td><strong class="u-ltr">${ctx.esc(coupon.code)}</strong></td><td>${coupon.type === "percent" ? ctx.dt("نسبة", "Pourcentage") : ctx.dt("ثابت", "Fixe")}</td><td>${coupon.type === "percent" ? `${coupon.value}%` : ctx.money(coupon.value)}</td><td>${ctx.money(coupon.minTotal || 0)}</td><td>${coupon.expiresAt ? ctx.esc(ctx.fmtDate(coupon.expiresAt)) : "—"}</td><td><label class="toggle"><input type="checkbox" data-coupon-active="${index}" ${coupon.active !== false ? "checked" : ""}><span></span></label></td><td><div class="cell-actions"><button class="btn btn-sm btn-soft" data-action="edit-coupon" data-index="${index}">${ctx.icon("edit")}</button><button class="btn btn-sm btn-soft" data-action="delete-coupon" data-index="${index}">${ctx.icon("trash")}</button></div></td></tr>`).join("")}
           </tbody></table></div>
         </div></article>
       </div>

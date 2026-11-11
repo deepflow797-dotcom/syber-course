@@ -62,20 +62,20 @@ export function install(ctx) {
           <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("التكامل والاستضافة", "Intégration & hébergement")}</h3></div><div class="dash-card-body">
             <div class="publish-modal-list">
               <div><span>${ctx.dt("وضع البيانات", "Mode données")}</span><strong>${ctx.R.remote ? "Supabase" : ctx.dt("محلي تجريبي", "Local démo")}</strong></div>
-              <div><span>Supabase URL</span><strong dir="ltr" style="font-size:8px">${ctx.esc(ctx.R.config.supabaseUrl || ctx.dt("غير مهيأ", "Non configuré"))}</strong></div>
+              <div><span>Supabase URL</span><strong class="u-fs-8" dir="ltr">${ctx.esc(ctx.R.config.supabaseUrl || ctx.dt("غير مهيأ", "Non configuré"))}</strong></div>
               <div><span>${ctx.dt("المشروع", "Projet")}</span><strong>${ctx.esc(ctx.L(ctx.model.settings.legalName || ctx.model.settings.storeName))}</strong></div>
               <div><span>${ctx.dt("نطاق البيع", "Périmètre")}</span><strong>MRU · Mauritanie</strong></div>
             </div>
-            <div class="field" style="margin-top:12px"><label>${ctx.dt("العملة المعروضة افتراضيًا", "Affichage de la devise par défaut")}</label><select data-currency-mode>
+            <div class="field u-mt-12"><label>${ctx.dt("العملة المعروضة افتراضيًا", "Affichage de la devise par défaut")}</label><select data-currency-mode>
               <option value="new" ${ctx.R.getCurrencyMode() === "new" ? "selected" : ""}>${ctx.dt("أوقية جديدة (MRU)", "Nouvelle ouguiya (MRU)")}</option>
               <option value="old" ${ctx.R.getCurrencyMode() === "old" ? "selected" : ""}>${ctx.dt("أوقية قديمة (MRO) = القيمة × 10", "Ancienne ouguiya (MRO) = valeur × 10")}</option>
             </select><p class="form-note">${ctx.dt("يمكن للزائر تبديلها من رأس المتجر. الأسعار محفوظة بالأوقية الجديدة.", "Le visiteur peut la changer dans l’en-tête. Les prix restent en nouvelle ouguiya.")}</p></div>
-            <p class="form-note" style="margin-top:11px">${ctx.dt("لربط Supabase: ضع URL و anon key في config.js ثم نفّذ ملف supabase/schema.sql. ستتزامن الطلبات والحالة تلقائيًا.", "Pour Supabase : renseignez URL et anon key dans config.js puis exécutez supabase/schema.sql.")}</p>
+            <p class="form-note u-mt-11">${ctx.dt("لربط Supabase: ضع URL و anon key في config.js ثم نفّذ ملف supabase/schema.sql. ستتزامن الطلبات والحالة تلقائيًا.", "Pour Supabase : renseignez URL et anon key dans config.js puis exécutez supabase/schema.sql.")}</p>
             <a class="btn btn-soft btn-sm" href="supabase/schema.sql" target="_blank">${ctx.dt("عرض ملف SQL", "Voir le fichier SQL")}</a>
           </div></article>
           <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("منطقة الخطر", "Zone sensible")}</h3></div><div class="dash-card-body">
-            <p style="font-size:10px;color:var(--muted);line-height:1.8;margin-bottom:12px">${ctx.dt("إعادة تعيين البيانات التجريبية ستحذف الطلبات والمسودات والحسابات المحلية. لا يمكن التراجع.", "Réinitialiser la démo supprime commandes, brouillons et comptes locaux. Action irréversible.")}</p>
-            <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn btn-soft btn-sm" data-action="publish">${ctx.icon("publish")} ${ctx.dt("نشر الآن", "Publier")}</button><button class="btn btn-danger btn-sm" data-action="reset-demo">${ctx.icon("trash")} ${ctx.dt("إعادة تعيين التجربة", "Réinitialiser la démo")}</button></div>
+            <p class="u-fs-10 u-muted u-lh-18 u-mb-12">${ctx.dt("إعادة تعيين البيانات التجريبية ستحذف الطلبات والمسودات والحسابات المحلية. لا يمكن التراجع.", "Réinitialiser la démo supprime commandes, brouillons et comptes locaux. Action irréversible.")}</p>
+            <div class="u-flex u-gap-7 u-wrap"><button class="btn btn-soft btn-sm" data-action="publish">${ctx.icon("publish")} ${ctx.dt("نشر الآن", "Publier")}</button><button class="btn btn-danger btn-sm" data-action="reset-demo">${ctx.icon("trash")} ${ctx.dt("إعادة تعيين التجربة", "Réinitialiser la démo")}</button></div>
           </div></article>
         </div>
       </div>`;

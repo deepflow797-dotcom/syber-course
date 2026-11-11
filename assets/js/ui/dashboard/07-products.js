@@ -36,7 +36,7 @@ export function install(ctx) {
         <div class="dash-view-actions"><button class="btn btn-soft" data-action="bulk-price">${ctx.icon("edit")} ${ctx.dt("تعديل أسعار جماعي", "Prix groupés")}</button><button class="btn btn-primary" data-action="add-product">${ctx.icon("plus")} ${ctx.dt("منتج جديد", "Nouveau produit")}</button></div>
       </div>
       <div class="dash-toolbar">
-        <label class="field" style="min-width:210px"><input id="product-search" placeholder="${ctx.dt("بحث عن منتج...", "Rechercher un produit...")}" value="${ctx.esc(ctx.productSearch)}"></label>
+        <label class="field u-min-210"><input id="product-search" placeholder="${ctx.dt("بحث عن منتج...", "Rechercher un produit...")}" value="${ctx.esc(ctx.productSearch)}"></label>
         <label class="field"><select data-product-filter="category"><option value="all">${ctx.dt("كل الفئات", "Toutes catégories")}</option>${ctx.model.collections.map((collection) => `<option value="${ctx.esc(collection.handle)}" ${ctx.productCategory === collection.handle ? "selected" : ""}>${ctx.esc(ctx.lng(collection.title))}</option>`).join("")}</select></label>
         <label class="field"><select data-product-filter="stock"><option value="all">${ctx.dt("كل المخزون", "Tout le stock")}</option><option value="low" ${ctx.productStock === "low" ? "selected" : ""}>${ctx.dt("مخزون منخفض", "Stock faible")}</option><option value="out" ${ctx.productStock === "out" ? "selected" : ""}>${ctx.dt("نفد المخزون", "Épuisé")}</option></select></label>
         <div class="spacer"></div>
@@ -112,7 +112,7 @@ export function install(ctx) {
 
   function productCompareLabel(product) {
     if (!(product.compare > product.price)) return "";
-    return `<br><small style="text-decoration:line-through;color:var(--soft-muted)">${ctx.money(product.compare)}</small>`;
+    return `<br><small class="u-strike">${ctx.money(product.compare)}</small>`;
   }
 
   function stockColor(product, isLow) {
@@ -134,10 +134,10 @@ export function install(ctx) {
     const isLow = Number(product.stock) <= Number(ctx.model.settings.lowStockThreshold || 2);
     return `<tr>
               <td><div class="cell-main"><img src="${ctx.esc(product.image)}" alt=""><div><strong>${ctx.esc(product.title)}</strong><small>${ctx.esc(product.type || "")} · ${ctx.esc(product.condition || "")}</small></div></div></td>
-              <td style="direction:ltr">${ctx.esc(product.sku || product.handle)}</td>
+              <td class="u-ltr">${ctx.esc(product.sku || product.handle)}</td>
               <td>${ctx.esc(productCategoryLabel(product))}</td>
               <td class="price">${ctx.money(product.price)}${productCompareLabel(product)}</td>
-              <td><div style="display:flex;flex-direction:column;gap:3px"><strong style="font-size:9px;color:${stockColor(product, isLow)}">${product.stock}</strong><div class="mini-bar" style="--bar:${isLow ? "#e67e22" : "#25a55f"};min-width:50px"><i style="width:${stockBarPercent(product)}%"></i></div></div></td>
+              <td><div class="u-flex u-col u-gap-3"><strong class="u-fs-9 u-tint-text" data-sv="fg:${ctx.esc(stockColor(product, isLow))}">${product.stock}</strong><div class="mini-bar" data-sv="bar:${isLow ? "#e67e22" : "#25a55f"};min-width:50px"><i class="u-w-pct" data-sv="w:${stockBarPercent(product)}"></i></div></div></td>
               <td>${productActiveBadge(product)}</td>
               <td><label class="toggle"><input type="checkbox" data-product-active="${productIndex}" ${product.active !== false ? "checked" : ""}><span></span></label></td>
               <td><div class="cell-actions"><button class="btn btn-sm btn-soft" data-action="edit-product" data-index="${productIndex}">${ctx.icon("edit")}</button><button class="btn btn-sm btn-soft" data-action="delete-product" data-index="${productIndex}">${ctx.icon("trash")}</button></div></td>
@@ -349,8 +349,8 @@ export function install(ctx) {
       ctx.dt("تعديل الأسعار الجماعي", "Modification groupée des prix"),
       `
       <div class="field"><label>${ctx.dt("الفئة", "Catégorie")}</label><select id="bulk-category"><option value="all">${ctx.dt("كل الفئات", "Toutes")}</option>${ctx.model.collections.map((collection) => `<option value="${ctx.esc(collection.handle)}">${ctx.esc(ctx.lng(collection.title))}</option>`).join("")}</select></div>
-      <div class="form-grid" style="margin-top:10px"><div class="field"><label>${ctx.dt("نسبة التغيير %", "Pourcentage")}</label><input id="bulk-percent" type="number" value="5" placeholder="5"></div><div class="field"><label>${ctx.dt("الاتجاه", "Sens")}</label><select id="bulk-direction"><option value="up">${ctx.dt("زيادة", "Augmenter")}</option><option value="down">${ctx.dt("تخفيض", "Diminuer")}</option></select></div></div>
-      <p class="form-note" style="margin-top:10px">${ctx.dt("سيتم تحديث السعر الأخير مع الحفاظ على السعر المشطوب كما هو. يمكنك التراجع بعدم النشر.", "Le prix sera ajusté. Le prix barré reste inchangé. Vous pouvez annuler avant publication.")}</p>`,
+      <div class="form-grid u-mt-10"><div class="field"><label>${ctx.dt("نسبة التغيير %", "Pourcentage")}</label><input id="bulk-percent" type="number" value="5" placeholder="5"></div><div class="field"><label>${ctx.dt("الاتجاه", "Sens")}</label><select id="bulk-direction"><option value="up">${ctx.dt("زيادة", "Augmenter")}</option><option value="down">${ctx.dt("تخفيض", "Diminuer")}</option></select></div></div>
+      <p class="form-note u-mt-10">${ctx.dt("سيتم تحديث السعر الأخير مع الحفاظ على السعر المشطوب كما هو. يمكنك التراجع بعدم النشر.", "Le prix sera ajusté. Le prix barré reste inchangé. Vous pouvez annuler avant publication.")}</p>`,
       {
         footer: `<button class="btn btn-soft btn-sm" data-action="close-modal">${ctx.dt("إلغاء", "Annuler")}</button><button class="btn btn-primary btn-sm" data-action="apply-bulk-price">${ctx.dt("تطبيق", "Appliquer")}</button>`
       }

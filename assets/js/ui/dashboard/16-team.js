@@ -18,7 +18,7 @@ export function install(ctx) {
           ${ctx.biField(ctx.dt("المدينة", "Ville"), "settings.city")}
           <div class="form-grid">${ctx.field(ctx.dt("الرقم الظاهر", "Numéro affiché"), "settings.phoneDisplay", { placeholder: "+222 46 00 00 00" })}${ctx.field(ctx.dt("رقم الهاتف (دولي)", "Téléphone (international)"), "settings.phone", { placeholder: "+22246000000" })}</div>
           <p class="form-note">${ctx.dt("هذه المعلومات تظهر في الفوتر وصفحة التواصل وفي رسالة الواتساب للطلب", "Ces infos apparaissent dans le footer, la page contact et le message WhatsApp de commande")}</p>
-          <div class="btn-group" style="margin-top:10px"><button class="btn btn-primary" id="save-owner-contact">${ctx.icon("check")} ${ctx.dt("حفظ معلومات المتجر", "Enregistrer les infos boutique")}</button></div>
+          <div class="btn-group u-mt-10"><button class="btn btn-primary" id="save-owner-contact">${ctx.icon("check")} ${ctx.dt("حفظ معلومات المتجر", "Enregistrer les infos boutique")}</button></div>
         </div></article>
       </div>`;
   }
@@ -43,13 +43,13 @@ export function install(ctx) {
       (id) => `<option value="${id}" ${platform === id ? "selected" : ""}>${id}</option>`
     ).join("");
     return `
-              <div class="social-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-                <select data-social-platform="${i}" style="flex:1;min-width:130px;max-width:170px">
+              <div class="social-row u-flex u-gap-8 u-items-center u-mb-8 u-wrap">
+                <select class="u-grow u-min-130 u-max-170" data-social-platform="${i}">
                   <option value="">${ctx.dt("اختر المنصة", "Choisir la plateforme")}</option>
                   ${options}
                 </select>
-                <input type="url" data-social-url="${i}" value="${ctx.esc(link.href || "")}" placeholder="https://..." style="flex:2;min-width:200px" dir="ltr">
-                <button type="button" class="btn btn-sm btn-soft" data-action="remove-social" data-index="${i}" style="padding:6px" aria-label="${ctx.dt("حذف", "Supprimer")}">${ctx.icon("trash")}</button>
+                <input class="u-grow-2 u-min-200" type="url" data-social-url="${i}" value="${ctx.esc(link.href || "")}" placeholder="https://..." dir="ltr">
+                <button type="button" class="btn btn-sm btn-soft u-p-6" data-action="remove-social" data-index="${i}" aria-label="${ctx.dt("حذف", "Supprimer")}">${ctx.icon("trash")}</button>
               </div>`;
   }
 
@@ -61,7 +61,7 @@ export function install(ctx) {
             ${(ctx.model.settings.social || []).map(socialRowHTML).join("")}
           </div>
           <button type="button" class="btn btn-secondary btn-sm" id="add-social-link">${ctx.icon("plus")} ${ctx.dt("إضافة رابط", "Ajouter un lien")}</button>
-          <div class="btn-group" style="margin-top:10px"><button class="btn btn-primary" id="save-owner-social">${ctx.icon("check")} ${ctx.dt("حفظ الروابط", "Enregistrer les liens")}</button></div>
+          <div class="btn-group u-mt-10"><button class="btn btn-primary" id="save-owner-social">${ctx.icon("check")} ${ctx.dt("حفظ الروابط", "Enregistrer les liens")}</button></div>
         </div></article>
       </div>`;
   }
@@ -84,10 +84,10 @@ export function install(ctx) {
       .slice(0, 2)
       .toUpperCase();
     const inner = hasAvatar
-      ? `<img src="${ctx.esc(currentUser.avatar)}" alt="" style="width:100%;height:100%;object-fit:cover">`
+      ? `<img class="u-full u-fit-cover" src="${ctx.esc(currentUser.avatar)}" alt="">`
       : ctx.esc(initials);
-    return `          <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("الصورة الرمزية", "Avatar")}</h3></div><div class="dash-card-body" style="display:flex;align-items:center;gap:15px">
-            <div class="image-field" style="width:100px;height:100px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#ff6400,#a72396);color:#fff;display:grid;place-items:center;font-size:28px;font-weight:700">
+    return `          <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("الصورة الرمزية", "Avatar")}</h3></div><div class="dash-card-body u-flex u-items-center u-gap-15">
+            <div class="image-field u-avatar-lg">
               ${inner}
             </div>
             <div>
@@ -98,7 +98,7 @@ export function install(ctx) {
   }
 
   function activePaymentRow(payment) {
-    return `<div class="list-row"><div style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:8px;background:${ctx.esc(payment.color)};color:#fff;display:grid;place-items:center;font-size:9px;font-weight:800">${ctx.esc(String(ctx.lng(payment.name)).slice(0, 2))}</span><div><strong>${ctx.esc(ctx.lng(payment.name))}</strong><br><small>${ctx.esc(ctx.lng(payment.note))}</small></div></div></div>`;
+    return `<div class="list-row"><div class="u-flex u-items-center u-gap-10"><span class="u-avatar-xs u-tint" data-sv="bg:${ctx.esc(payment.color)}">${ctx.esc(String(ctx.lng(payment.name)).slice(0, 2))}</span><div><strong>${ctx.esc(ctx.lng(payment.name))}</strong><br><small>${ctx.esc(ctx.lng(payment.note))}</small></div></div></div>`;
   }
 
   function securityPanel() {
@@ -109,9 +109,9 @@ export function install(ctx) {
             <div class="field"><label>${ctx.dt("الجديدة", "Nouveau")}</label><input id="sec-next" type="password" minlength="8" autocomplete="new-password"></div>
             <div class="field"><label>${ctx.dt("التأكيد", "Confirmer")}</label><input id="sec-confirm" type="password" autocomplete="new-password"></div>
           </div>
-          <div class="btn-group" style="margin-top:10px"><button class="btn btn-primary" id="change-own-pwd">${ctx.icon("check")} ${ctx.dt("تغيير كلمة المرور", "Changer le mot de passe")}</button></div>
+          <div class="btn-group u-mt-10"><button class="btn btn-primary" id="change-own-pwd">${ctx.icon("check")} ${ctx.dt("تغيير كلمة المرور", "Changer le mot de passe")}</button></div>
         </div></article>
-        <article class="dash-card" style="margin-top:14px"><div class="dash-card-head"><h3>${ctx.dt("الجلسات النشطة", "Sessions actives")}</h3></div><div class="dash-card-body">
+        <article class="dash-card u-mt-14"><div class="dash-card-head"><h3>${ctx.dt("الجلسات النشطة", "Sessions actives")}</h3></div><div class="dash-card-body">
           <p class="form-note">${ctx.dt("سيتم عرض الجلسات قريباً مع إمكانية إلغاء الجلسات البعيدة", "Les sessions s'afficheront bientôt avec possibilité de révoquer les sessions distantes")}</p>
         </div></article>
       </div>`;
@@ -170,7 +170,7 @@ export function install(ctx) {
   }
 
   function managerCard(manager) {
-    return `<article class="dash-card"><div class="dash-card-body"><div style="display:flex;align-items:center;gap:10px"><span class="dash-avatar" style="background:${managerBackground(manager)}">${ctx.esc(managerInitials(manager))}</span><div style="flex:1"><strong style="font-size:12px">${ctx.esc(managerDisplayName(manager))}</strong><br><small style="font-size:8px;color:var(--soft-muted)">@${ctx.esc(manager.username)} · ${managerRoleLabel(manager)}</small></div>${managerStateBadge(manager)}</div><div style="margin-top:11px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:5px"><span style="font-size:8px;color:var(--soft-muted);direction:ltr">${ctx.esc(manager.whatsapp || "—")}</span><span style="flex:1"></span>${forcePasswordButton(manager)}<button class="btn btn-sm btn-soft" data-action="edit-manager" data-id="${manager.id}">${ctx.icon("edit")}</button>${deleteManagerButton(manager)}</div></div></article>`;
+    return `<article class="dash-card"><div class="dash-card-body"><div class="u-flex u-items-center u-gap-10"><span class="dash-avatar u-tint" data-sv="bg:${ctx.esc(managerBackground(manager))}">${ctx.esc(managerInitials(manager))}</span><div class="u-grow"><strong class="u-fs-12">${ctx.esc(managerDisplayName(manager))}</strong><br><small class="u-fs-8 u-soft">@${ctx.esc(manager.username)} · ${managerRoleLabel(manager)}</small></div>${managerStateBadge(manager)}</div><div class="u-mt-11 u-pt-10 u-border-top u-flex u-items-center u-gap-5"><span class="u-fs-8 u-soft u-ltr">${ctx.esc(manager.whatsapp || "—")}</span><span class="u-grow"></span>${forcePasswordButton(manager)}<button class="btn btn-sm btn-soft" data-action="edit-manager" data-id="${manager.id}">${ctx.icon("edit")}</button>${deleteManagerButton(manager)}</div></div></article>`;
   }
 
   /** The manager row of the logged-in user, with a session-based fallback. */
@@ -226,7 +226,7 @@ export function install(ctx) {
   function profileInfoCard(currentUser) {
     return `          <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("معلومات الحساب", "Informations du compte")}</h3></div><div class="dash-card-body dash-form">
             ${profileIdentityFields(currentUser)}
-            <div class="btn-group" style="margin-top:10px"><button class="btn btn-primary" id="save-profile-info">${ctx.icon("check")} ${ctx.dt("حفظ المعلومات", "Enregistrer")}</button></div>
+            <div class="btn-group u-mt-10"><button class="btn btn-primary" id="save-profile-info">${ctx.icon("check")} ${ctx.dt("حفظ المعلومات", "Enregistrer")}</button></div>
           </div></article>`;
   }
 
@@ -261,7 +261,7 @@ export function install(ctx) {
       <div class="dash-grid cols-2">
         ${ctx.R.managers.map(managerCard).join("")}
       </div>
-      <article class="dash-card" style="margin-top:14px"><div class="dash-card-body"><h3 style="font-size:12px;margin-bottom:7px">${ctx.dt("نصائح الأمان", "Conseils de sécurité")}</h3><ul style="list-style:disc;padding-inline-start:17px;font-size:10px;color:var(--muted);line-height:1.9"><li>${ctx.dt("يُطلب من كل مدير تغيير كلمة المرور عند أول دخول.", "Chaque gérant doit changer son mot de passe à la première connexion.")}</li><li>${ctx.dt("استخدم Supabase Auth في الإنتاج بدل الحسابات المحلية.", "Utilisez Supabase Auth en production au lieu des comptes locaux.")}</li><li>${ctx.dt("راجع سجل النشاط بانتظام.", "Consultez régulièrement le journal d’activité.")}</li></ul></div></article>`;
+      <article class="dash-card u-mt-14"><div class="dash-card-body"><h3 class="u-fs-12 u-mb-7">${ctx.dt("نصائح الأمان", "Conseils de sécurité")}</h3><ul class="u-disc u-ps-17 u-fs-10 u-muted u-lh-19"><li>${ctx.dt("يُطلب من كل مدير تغيير كلمة المرور عند أول دخول.", "Chaque gérant doit changer son mot de passe à la première connexion.")}</li><li>${ctx.dt("استخدم Supabase Auth في الإنتاج بدل الحسابات المحلية.", "Utilisez Supabase Auth en production au lieu des comptes locaux.")}</li><li>${ctx.dt("راجع سجل النشاط بانتظام.", "Consultez régulièrement le journal d’activité.")}</li></ul></div></article>`;
   }
 
   ctx.pendingManagerId = null;
@@ -308,7 +308,7 @@ export function install(ctx) {
         <div class="field"><label>WhatsApp</label><input id="manager-whatsapp" value="${ctx.esc(manager?.whatsapp || "")}" dir="ltr" placeholder="222..." inputmode="tel"></div>
         ${managerPasswordField(manager)}
       </div>
-      <p class="form-note" style="margin-top:10px">${managerNote(remote)}</p>`;
+      <p class="form-note u-mt-10">${managerNote(remote)}</p>`;
   }
 
   const MANAGER_MODAL_FOOTER = `<button class="btn btn-soft btn-sm" data-action="close-modal">${ctx.dt("إلغاء", "Annuler")}</button><button class="btn btn-primary btn-sm" data-action="save-manager">${ctx.dt("حفظ", "Enregistrer")}</button>`;

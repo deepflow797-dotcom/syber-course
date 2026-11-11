@@ -23,16 +23,16 @@ export function install(ctx) {
             ${ctx.field(ctx.dt("لون النص", "Couleur texte"), "settings.colors.ink", { type: "color" })}
             ${ctx.field(ctx.dt("الخلفية الفاتحة", "Fond clair"), "settings.colors.lavender", { type: "color" })}
           </div>
-          <div style="border-radius:12px;padding:18px;background:var(--surface-2);border:1px solid var(--border);margin-top:4px">
+          <div class="u-r-12 u-p-18 u-surface-2 u-border u-mt-4">
             <span class="eyebrow">${ctx.dt("معاينة", "Aperçu")}</span>
-            <h3 style="font-size:22px;margin:8px 0 6px">${ctx.esc(ctx.lng(ctx.model.settings.storeName))}</h3>
-            <p style="font-size:11px;color:var(--muted);margin-bottom:12px">${ctx.esc(ctx.lng(ctx.model.settings.tagline))}</p>
+            <h3 class="u-fs-22 u-my-6">${ctx.esc(ctx.lng(ctx.model.settings.storeName))}</h3>
+            <p class="u-fs-11 u-muted u-mb-12">${ctx.esc(ctx.lng(ctx.model.settings.tagline))}</p>
             <button class="btn btn-primary btn-sm" type="button">${ctx.dt("تسوق الآن", "Découvrir")}</button>
-            <button class="btn btn-soft btn-sm" type="button" style="margin-inline-start:5px">${ctx.dt("معرفة المزيد", "En savoir plus")}</button>
+            <button class="btn btn-soft btn-sm u-ms-5" type="button">${ctx.dt("معرفة المزيد", "En savoir plus")}</button>
           </div>
           <p class="form-note">${ctx.dt("يوفر المتجر الوضع الفاتح والداكن تلقائيًا. الألوان تُطبّق على الأزرار، الشريط العلوي والعروض.", "Le mode clair/sombre est automatique. Les couleurs s’appliquent aux boutons, au header et aux offres.")}</p>
         </div></article>
       </div>
-      <article class="dash-card" style="margin-top:14px"><div class="dash-card-head"><h3>${ctx.dt("الوضع الليلي والحركات", "Mode sombre et animations")}</h3></div><div class="dash-card-body"><div class="form-grid">${ctx.directToggle(ctx.dt("تفعيل الوضع الليلي للزوار", "Activer le mode sombre"), "settings.darkMode", ctx.model.settings.darkMode !== false)}${ctx.directToggle(ctx.dt("تفعيل الحركات", "Activer les animations"), "settings.animations", ctx.model.settings.animations !== false)}${ctx.directToggle(ctx.dt("تفعيل PWA", "Activer la PWA"), "settings.pwa", ctx.model.settings.pwa !== false)}</div></div></article>`;
+      <article class="dash-card u-mt-14"><div class="dash-card-head"><h3>${ctx.dt("الوضع الليلي والحركات", "Mode sombre et animations")}</h3></div><div class="dash-card-body"><div class="form-grid">${ctx.directToggle(ctx.dt("تفعيل الوضع الليلي للزوار", "Activer le mode sombre"), "settings.darkMode", ctx.model.settings.darkMode !== false)}${ctx.directToggle(ctx.dt("تفعيل الحركات", "Activer les animations"), "settings.animations", ctx.model.settings.animations !== false)}${ctx.directToggle(ctx.dt("تفعيل PWA", "Activer la PWA"), "settings.pwa", ctx.model.settings.pwa !== false)}</div></div></article>`;
   }
 }

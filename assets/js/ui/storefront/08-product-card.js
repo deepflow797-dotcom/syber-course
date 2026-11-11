@@ -23,7 +23,7 @@ export function install(ctx) {
     const swatches = colors
       .map(
         (c, i) =>
-          `<button class="swatch${i === 0 ? " selected" : ""}" type="button" style="background:${c.hex}" data-color="${ctx.esc(c.name)}" data-color-img="${ctx.esc(p.colorImages?.[c.name] || p.image)}" data-color-hex="${ctx.esc(c.hex)}" title="${ctx.esc(c.name)}" aria-label="${ctx.esc(c.name)}"></button>`
+          `<button class="swatch${i === 0 ? " selected" : ""} u-tint" type="button" data-sv="bg:${ctx.esc(c.hex)}" data-color="${ctx.esc(c.name)}" data-color-img="${ctx.esc(p.colorImages?.[c.name] || p.image)}" data-color-hex="${ctx.esc(c.hex)}" title="${ctx.esc(c.name)}" aria-label="${ctx.esc(c.name)}"></button>`
       )
       .join("");
     const more = (p.colors || []).length > 4 ? `<span class="swatch-more">+${p.colors.length - 4}</span>` : "";

@@ -34,14 +34,14 @@ export function install(ctx) {
         <div class="dash-grid cols-2">
           <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("أقسام الصفحة", "Sections de la page")}</h3><span class="badge-soft">${sections.filter((section) => section.visible !== false).length}/${sections.length}</span></div><div class="dash-card-body"><div class="list-editor">
             ${sections.map((section, index) => `<div class="list-row"><span class="drag">${ctx.icon("arrows")}</span><div class="grow"><strong>${ctx.esc(PAGE_SECTION_LABELS[section.id]?.[ctx.dashLang] || section.id)}</strong><small>${section.id}</small></div><div class="row-actions"><button class="btn btn-sm btn-soft" data-action="page-section-up" data-id="${section.id}" ${index === 0 ? "disabled" : ""}>${ctx.icon("up")}</button><button class="btn btn-sm btn-soft" data-action="page-section-down" data-id="${section.id}" ${index === sections.length - 1 ? "disabled" : ""}>${ctx.icon("down")}</button><label class="toggle"><input type="checkbox" data-page-section-visible="${section.id}" ${section.visible !== false ? "checked" : ""}><span></span></label></div></div>`).join("")}
-          </div><p class="form-note" style="margin-top:10px">${ctx.dt("التغييرات تظهر في المعاينة فورًا وتُنشر عند الضغط على نشر.", "Les changements apparaissent dans l’aperçu et sont publiés via Publier.")}</p></div></article>
+          </div><p class="form-note u-mt-10">${ctx.dt("التغييرات تظهر في المعاينة فورًا وتُنشر عند الضغط على نشر.", "Les changements apparaissent dans l’aperçu et sont publiés via Publier.")}</p></div></article>
           <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("معاينة الترتيب", "Aperçu de l’ordre")}</h3></div><div class="dash-card-body">
-            <div style="border:1px solid var(--border);border-radius:10px;padding:10px;display:grid;gap:5px;background:var(--surface-2)">
+            <div class="u-border u-r-10 u-p-10 u-grid u-gap-5 u-surface-2">
               ${sections
                 .filter((section) => section.visible !== false)
                 .map(
                   (section, index) =>
-                    `<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:9px;display:flex;justify-content:space-between"><span>${index + 1}. ${ctx.esc(PAGE_SECTION_LABELS[section.id]?.[ctx.dashLang] || section.id)}</span><span style="color:var(--soft-muted)">${section.id}</span></div>`
+                    `<div class="u-surface u-border u-r-6 u-p-7 u-fs-9 u-flex u-justify-between"><span>${index + 1}. ${ctx.esc(PAGE_SECTION_LABELS[section.id]?.[ctx.dashLang] || section.id)}</span><span class="u-soft">${section.id}</span></div>`
                 )
                 .join("")}
             </div>
@@ -50,14 +50,14 @@ export function install(ctx) {
       </div>
       <div class="dash-panel" data-dash-panel="home-hero">
         <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("شرائح السلايدر", "Diapositives")}</h3><button data-action="add-hero">${ctx.icon("plus")} ${ctx.dt("إضافة شريحة", "Ajouter")}</button></div><div class="dash-card-body">
-          <div class="list-editor">${(ctx.model.settings.heroSlides || []).map((slide, index) => `<div class="list-row"><span class="image-preview" style="width:44px;height:44px;flex-basis:44px"><img src="${ctx.esc(slide.image)}" alt=""></span><div class="grow"><strong>${ctx.esc(ctx.lng(slide.title))}</strong><small>${ctx.esc(slide.href)}</small></div>${ctx.directToggle("", `settings.heroSlides.${index}.visible`, slide.visible !== false)}<button class="btn btn-sm btn-soft" data-action="edit-hero" data-index="${index}">${ctx.icon("edit")}</button><button class="btn btn-sm btn-soft" data-action="delete-hero" data-index="${index}">${ctx.icon("trash")}</button></div>`).join("")}</div>
-          <p class="form-note" style="margin-top:10px">${ctx.dt("ضع صورة بخلفية شفافة للحصول على أفضل نتيجة. يمكن استخدام رابط أو رفع صورة.", "Utilisez une image à fond transparent. URL ou téléversement.")}</p>
+          <div class="list-editor">${(ctx.model.settings.heroSlides || []).map((slide, index) => `<div class="list-row"><span class="image-preview u-sq-44 u-basis-44"><img src="${ctx.esc(slide.image)}" alt=""></span><div class="grow"><strong>${ctx.esc(ctx.lng(slide.title))}</strong><small>${ctx.esc(slide.href)}</small></div>${ctx.directToggle("", `settings.heroSlides.${index}.visible`, slide.visible !== false)}<button class="btn btn-sm btn-soft" data-action="edit-hero" data-index="${index}">${ctx.icon("edit")}</button><button class="btn btn-sm btn-soft" data-action="delete-hero" data-index="${index}">${ctx.icon("trash")}</button></div>`).join("")}</div>
+          <p class="form-note u-mt-10">${ctx.dt("ضع صورة بخلفية شفافة للحصول على أفضل نتيجة. يمكن استخدام رابط أو رفع صورة.", "Utilisez une image à fond transparent. URL ou téléversement.")}</p>
         </div></article>
       </div>
       <div class="dash-panel" data-dash-panel="home-products">
         <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("أقسام المنتجات على الرئيسية", "Sections produits")}</h3></div><div class="dash-card-body">
           <div class="list-editor">${productSections.map((section, index) => `<div class="list-row"><span class="drag">${ctx.icon("arrows")}</span><div class="grow"><strong>${ctx.esc(ctx.lng(section.title))}</strong><small class="handle">${ctx.esc(section.collection || "")} · ${ctx.esc(section.layout)}</small></div><div class="row-actions"><button class="btn btn-sm btn-soft" data-action="home-section-up" data-id="${section.id}" ${index === 0 ? "disabled" : ""}>${ctx.icon("up")}</button><button class="btn btn-sm btn-soft" data-action="home-section-down" data-id="${section.id}" ${index === productSections.length - 1 ? "disabled" : ""}>${ctx.icon("down")}</button><label class="toggle"><input type="checkbox" data-home-section-visible="${section.id}" ${section.visible !== false ? "checked" : ""}><span></span></label><button class="btn btn-sm btn-soft" data-action="edit-home-section" data-id="${section.id}">${ctx.icon("edit")}</button></div></div>`).join("")}</div>
-          <button class="btn btn-soft" style="margin-top:10px" data-action="add-home-section">${ctx.icon("plus")} ${ctx.dt("إضافة قسم منتجات", "Ajouter une section")}</button>
+          <button class="btn btn-soft u-mt-10" data-action="add-home-section">${ctx.icon("plus")} ${ctx.dt("إضافة قسم منتجات", "Ajouter une section")}</button>
         </div></article>
       </div>`;
   }

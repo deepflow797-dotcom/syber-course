@@ -72,7 +72,7 @@ export function install(ctx) {
         <section class="login-panel">
           <div class="login-card">
             <span class="badge-soft orange">${ctx.dt("أول تسجيل دخول", "Première connexion")}</span>
-            <h2 style="margin-top:10px">${ctx.dt("تغيير كلمة المرور", "Changer le mot de passe")}</h2>
+            <h2 class="u-mt-10">${ctx.dt("تغيير كلمة المرور", "Changer le mot de passe")}</h2>
             <p>${ctx.dt("الحساب", "Compte")}: <strong>${ctx.esc(ctx.session?.username || "")}</strong></p>
             <form id="password-form">
               <div class="field"><label>${ctx.dt("كلمة المرور الحالية", "Mot de passe actuel")}</label><input name="current" type="password" required></div>
@@ -80,7 +80,7 @@ export function install(ctx) {
               <div class="field"><label>${ctx.dt("تأكيد كلمة المرور", "Confirmer le mot de passe")}</label><input name="confirm" type="password" minlength="8" required></div>
               <div class="field"><label>${ctx.dt("رقم واتساب المتجر / المدير", "WhatsApp de la boutique / du gérant")}</label><input name="whatsapp" inputmode="tel" placeholder="22246000000" dir="ltr" required value="${ctx.esc(ctx.model.settings.whatsapp || "")}"></div>
               <div class="field"><label>${ctx.dt("طرق الدفع المطلوبة", "Méthodes de paiement obligatoires")}</label>
-                <div class="setup-form" style="margin-top:8px">
+                <div class="setup-form u-mt-8">
                   ${(ctx.model.settings.payments || [])
                     .map(
                       (p, i) => `

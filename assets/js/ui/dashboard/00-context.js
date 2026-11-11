@@ -93,8 +93,8 @@ export function install(ctx) {
   function catalogBanner() {
     if (!CAT || !CAT.enabled) return "";
     if (tablesMode())
-      return `<div class="notice good" style="margin-bottom:12px">${dt("مصدر الحقيقة: الجداول العلائقية (restore_products / restore_collections / restore_coupons). كل تعديل هنا يُحفظ مباشرة في قاعدة البيانات مع تسجيل في سجل التدقيق.", "Source de vérité : tables relationnelles. Chaque modification est enregistrée directement en base avec audit.")}</div>`;
-    return `<div class="notice warn" style="margin-bottom:12px">${dt("الجداول العلائقية فارغة أو لم تُطبَّق الهجرة 0002/0003. المنتجات تُقرأ حاليًا من JSON (مصدر قديم). طبّق الهجرات ثم انقل البيانات:", "Tables relationnelles vides ou migrations 0002/0003 non appliquées. Appliquez-les puis importez :")} <button class="btn btn-sm btn-primary" data-action="import-catalog">${dt("نقل الكتالوج إلى الجداول", "Importer le catalogue")}</button></div>`;
+      return `<div class="notice good u-mb-12">${dt("مصدر الحقيقة: الجداول العلائقية (restore_products / restore_collections / restore_coupons). كل تعديل هنا يُحفظ مباشرة في قاعدة البيانات مع تسجيل في سجل التدقيق.", "Source de vérité : tables relationnelles. Chaque modification est enregistrée directement en base avec audit.")}</div>`;
+    return `<div class="notice warn u-mb-12">${dt("الجداول العلائقية فارغة أو لم تُطبَّق الهجرة 0002/0003. المنتجات تُقرأ حاليًا من JSON (مصدر قديم). طبّق الهجرات ثم انقل البيانات:", "Tables relationnelles vides ou migrations 0002/0003 non appliquées. Appliquez-les puis importez :")} <button class="btn btn-sm btn-primary" data-action="import-catalog">${dt("نقل الكتالوج إلى الجداول", "Importer le catalogue")}</button></div>`;
   }
   ctx.session = ctx.R.currentSession();
   ctx.route = (location.hash || "#overview").slice(1);

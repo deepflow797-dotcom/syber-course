@@ -59,8 +59,7 @@ export function install(ctx) {
           <div class="blog-card-body"><time>${ctx.esc(ctx.R.formatDate(post.date))}</time><h2>${ctx.esc(ctx.L(post.title))}</h2><p>${ctx.esc(ctx.L(post.excerpt))}</p><span class="read-more">${ctx.esc(ctx.t("readMore"))} ${ctx.ICON.arrowRight}</span></div>
         </a>`
             )
-            .join("") ||
-          `<div class="empty-state" style="grid-column:1/-1"><h2>${ctx.esc(ctx.t("noProducts"))}</h2></div>`
+            .join("") || `<div class="empty-state u-span-full"><h2>${ctx.esc(ctx.t("noProducts"))}</h2></div>`
         }
       </div>
     </div>`;
@@ -119,7 +118,7 @@ export function install(ctx) {
           .slice(0, 5)
           .map((order) => {
             const status = ctx.R.statusMeta(order.status);
-            return `<div class="account-order"><div><strong>${ctx.esc(order.id)}</strong><small>${ctx.esc(ctx.R.formatDate(order.createdAt))} · ${ctx.esc(order.items?.length || 0)} ${ctx.esc(ctx.t("products"))}</small></div><span class="status-pill" style="--status:${status.color}">${ctx.esc(ctx.L(status.label))}</span><b>${ctx.money(order.total)}</b></div>`;
+            return `<div class="account-order"><div><strong>${ctx.esc(order.id)}</strong><small>${ctx.esc(ctx.R.formatDate(order.createdAt))} · ${ctx.esc(order.items?.length || 0)} ${ctx.esc(ctx.t("products"))}</small></div><span class="status-pill u-status-text" data-sv="status:${ctx.esc(status.color)}">${ctx.esc(ctx.L(status.label))}</span><b>${ctx.money(order.total)}</b></div>`;
           })
           .join("")}</div>`
             : `<p class="muted">${ctx.esc(ctx.t("noOrders"))}</p>`
@@ -313,7 +312,7 @@ export function install(ctx) {
         return;
       }
       const status = ctx.R.statusMeta(found.status);
-      box.innerHTML = `<div class="account-result"><div class="result-head"><strong>${ctx.esc(found.id)}</strong><span class="status-pill" style="--status:${status.color}">${ctx.esc(ctx.L(status.label))}</span></div><p>${ctx.esc(found.customer?.name || "")} · ${ctx.money(found.total)}</p><ul>${(found.items || []).map((item) => `<li>${ctx.esc(item.title)} × ${item.qty}</li>`).join("")}</ul></div>`;
+      box.innerHTML = `<div class="account-result"><div class="result-head"><strong>${ctx.esc(found.id)}</strong><span class="status-pill u-status-text" data-sv="status:${ctx.esc(status.color)}">${ctx.esc(ctx.L(status.label))}</span></div><p>${ctx.esc(found.customer?.name || "")} · ${ctx.money(found.total)}</p><ul>${(found.items || []).map((item) => `<li>${ctx.esc(item.title)} × ${item.qty}</li>`).join("")}</ul></div>`;
     };
     document.getElementById("acc-track")?.addEventListener("click", findOrder);
     document.getElementById("acc-order")?.addEventListener("keydown", (event) => {

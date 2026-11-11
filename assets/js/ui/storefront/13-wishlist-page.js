@@ -14,7 +14,7 @@ export function install(ctx) {
     const items = ctx.ALL_PRODUCTS.filter((p) => ctx.readWish().has(p.handle));
     grid.innerHTML = items.length
       ? items.map(ctx.cardHTML).join("")
-      : `<div class="empty-state" style="grid-column:1/-1"><h2>${ctx.esc(ctx.t("emptyWish"))}</h2><p>${ctx.esc(ctx.t("emptyWishText"))}</p><a class="btn btn-primary" href="collection.html?handle=all">${ctx.esc(ctx.t("browseAll"))}</a></div>`;
+      : `<div class="empty-state u-span-full"><h2>${ctx.esc(ctx.t("emptyWish"))}</h2><p>${ctx.esc(ctx.t("emptyWishText"))}</p><a class="btn btn-primary" href="collection.html?handle=all">${ctx.esc(ctx.t("browseAll"))}</a></div>`;
     ctx.observeReveals();
     ctx.hydrateIcons(grid);
   }

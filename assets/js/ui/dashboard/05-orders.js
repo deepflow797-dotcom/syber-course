@@ -36,15 +36,15 @@ export function install(ctx) {
   const escOr = (value) => ctx.esc(value || "");
 
   function orderStatusSelect(order, statusColor) {
-    return `<select class="dash-field" data-order-status="${ctx.esc(order.id)}" style="min-width:95px;height:28px;padding:2px 6px;font-size:9px;border-color:${statusColor}">${ctx.statusOptions(order.status)}</select>`;
+    return `<select class="dash-field u-min-95 u-h-28 u-px-2x6 u-fs-9 u-status-border" data-order-status="${ctx.esc(order.id)}" data-sv="fg:${ctx.esc(statusColor)}">${ctx.statusOptions(order.status)}</select>`;
   }
 
   function orderRow(order) {
     const status = ctx.R.statusMeta(order.status);
     const itemCount = (order.items || []).reduce((sum, item) => sum + Number(item.qty || 1), 0);
     return `<tr>
-          <td><strong style="font-size:9px">${ctx.esc(order.id)}</strong><br><small style="font-size:8px;color:var(--soft-muted)">${ctx.esc(ctx.fmtDateTime(order.createdAt))}</small></td>
-          <td><strong style="font-size:10px">${escOr(order.customer?.name)}</strong><br><small dir="ltr" style="font-size:8px;color:var(--soft-muted)">${escOr(order.customer?.phone)}</small></td>
+          <td><strong class="u-fs-9">${ctx.esc(order.id)}</strong><br><small class="u-fs-8 u-soft">${ctx.esc(ctx.fmtDateTime(order.createdAt))}</small></td>
+          <td><strong class="u-fs-10">${escOr(order.customer?.name)}</strong><br><small class="u-fs-8 u-soft" dir="ltr">${escOr(order.customer?.phone)}</small></td>
           <td>${escOr(order.customer?.city)}</td>
           <td>${itemCount}</td>
           <td>${escOr(order.payment?.name)}</td>
@@ -82,9 +82,9 @@ export function install(ctx) {
         <div class="dash-view-actions"><button class="btn btn-soft" type="button" data-action="export-orders">${ctx.icon("download")} ${ctx.dt("تصدير CSV", "Exporter CSV")}</button></div>
       </div>
       <div class="dash-toolbar">
-        <div class="segmented" style="flex-wrap:wrap">${tabs.map((tab) => `<button type="button" data-order-filter="${tab.id}" class="${ctx.orderFilter === tab.id ? "active" : ""}">${ctx.esc(tab.label)} ${tab.count ? `(${tab.count})` : ""}</button>`).join("")}</div>
+        <div class="segmented u-wrap">${tabs.map((tab) => `<button type="button" data-order-filter="${tab.id}" class="${ctx.orderFilter === tab.id ? "active" : ""}">${ctx.esc(tab.label)} ${tab.count ? `(${tab.count})` : ""}</button>`).join("")}</div>
         <div class="spacer"></div>
-        <label class="field" style="min-width:210px"><input id="order-search" placeholder="${ctx.dt("بحث بالرقم، الاسم أو الهاتف", "N°, nom ou téléphone")}" value="${ctx.esc(ctx.searchTerm)}"></label>
+        <label class="field u-min-210"><input id="order-search" placeholder="${ctx.dt("بحث بالرقم، الاسم أو الهاتف", "N°, nom ou téléphone")}" value="${ctx.esc(ctx.searchTerm)}"></label>
       </div>
       <div class="dash-card">${ordersTable(orders)}</div>`;
   }
@@ -110,8 +110,7 @@ export function install(ctx) {
       .join("");
   }
 
-  /** A4 stylesheet of the printed document (same declarations as the former inline <style>). */
-  const PRINT_CSS = `@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:Tahoma,Arial,sans-serif;color:#111;font-size:12px;line-height:1.6}header{display:flex;justify-content:space-between;border-bottom:2px solid #ff6400;padding-bottom:12px;margin-bottom:18px}h1{font-size:22px;margin:0}img{width:120px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{padding:7px;border-bottom:1px solid #ddd;text-align:start;font-size:11px}th{background:#f5f5f5}small{color:#666;font-size:9px}.total{font-size:16px;font-weight:bold;text-align:end;margin-top:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.box{border:1px solid #ddd;padding:10px;border-radius:6px}.label{border:2px solid #111;padding:22px;margin-top:20px}.label h2{font-size:26px;margin:0 0 10px}.label .addr{font-size:17px;line-height:1.8}.barcode{margin-top:16px;font-family:monospace;font-size:13px;letter-spacing:2px}`;
+  /** The A4 document styles live in assets/css/print.css (a written document cannot carry a <style> block under CSP). */
 
   function printDocumentTitle(order, invoice) {
     if (invoice) return `${ctx.dt("فاتورة", "Facture")} ${ctx.esc(order.id)}`;
@@ -126,7 +125,7 @@ export function install(ctx) {
     const phone = ctx.esc(ctx.model.settings.mapPhone || ctx.model.settings.phoneDisplay || "");
     const address = ctx.esc(ctx.lng(ctx.model.settings.address));
     const email = ctx.esc(ctx.model.settings.email || "");
-    return `<header><div><img src="${location.origin}${location.pathname.replace(/[^/]*$/, "")}${logo}" alt="${storeName}"><h1>${heading}</h1></div><div style="text-align:end"><strong>${phone}</strong><br>${address}<br>${email}</div></header>`;
+    return `<header><div><img src="${location.origin}${location.pathname.replace(/[^/]*$/, "")}${logo}" alt="${storeName}"><h1>${heading}</h1></div><div class="u-text-end"><strong>${phone}</strong><br>${address}<br>${email}</div></header>`;
   }
 
   function printInvoiceBody(order, itemRows) {
@@ -148,34 +147,42 @@ export function install(ctx) {
     return `<div class="label"><h2>${storeName}</h2><div class="addr">${printAddressLines(order)}</div>${barcode}</div>`;
   }
 
-  function printDocumentHTML(order, invoice) {
+  /** The document body (the page shell, dir and title live in print.html). */
+  function printDocumentBody(order, invoice) {
     const itemRows = printItemRows(order);
     const body = invoice ? printInvoiceBody(order, itemRows) : printLabelBody(order);
-    const dir = ctx.dashLang === "ar" ? "rtl" : "ltr";
     const footer = ctx.dt(
       "تم إنشاء هذا المستند من لوحة تحكم المتجر.",
       "Document généré depuis le tableau de bord de la boutique."
     );
-    return `<!doctype html><html lang="${ctx.dashLang}" dir="${dir}"><head><meta charset="utf-8"><title>${printDocumentTitle(order, invoice)}</title><style>${PRINT_CSS}</style></head><body>
-      ${printHeaderHTML(order, invoice)}
+    return `${printHeaderHTML(order, invoice)}
       ${body}
-      <p style="margin-top:24px;font-size:9px;color:#888">${footer}</p>
-      </body></html>`;
+      <p class="print-footer">${footer}</p>`;
   }
 
+  /** Prints through a real same-origin page: an about:blank popup cannot load a stylesheet under CSP. */
   function printOrder(order, mode) {
     const invoice = mode === "invoice";
-    const win = window.open("", "_blank", "width=820,height=980");
+    const key = `restore_print_${Date.now()}`;
+    const payload = {
+      title: printDocumentTitle(order, invoice),
+      lang: ctx.dashLang,
+      dir: ctx.dashLang === "ar" ? "rtl" : "ltr",
+      body: printDocumentBody(order, invoice)
+    };
+    try {
+      sessionStorage.setItem(key, JSON.stringify(payload));
+    } catch {
+      ctx.toast(ctx.dt("تعذر تجهيز الطباعة", "Impression impossible"), "error");
+      return;
+    }
+    const win = window.open(`print.html?doc=${encodeURIComponent(key)}`, "_blank", "width=820,height=980");
     if (!win) {
       ctx.toast(ctx.dt("اسمح بالنوافذ المنبثقة للطباعة", "Autorisez les pop-ups pour imprimer"), "error");
       return;
     }
-    win.document.write(printDocumentHTML(order, invoice));
-    win.document.close();
-    setTimeout(() => {
-      win.focus();
-      win.print();
-    }, 350);
+    // print-document.js prints once the sheet has loaded; this cleans the entry up afterwards
+    setTimeout(() => sessionStorage.removeItem(key), 5000);
   }
 
   function orderItemRow(item) {
@@ -201,28 +208,28 @@ export function install(ctx) {
     return `<div class="order-detail-section">
             <h4>${ctx.dt("العميل", "Client")}</h4>
             <p>${orderContactLine(order)}</p>
-            <div style="display:flex;gap:5px;margin-top:9px;flex-wrap:wrap"><a class="btn btn-sm btn-whatsapp" href="${wa}" target="_blank" rel="noopener">${ctx.icon("whatsapp")} ${ctx.dt("واتساب", "WhatsApp")}</a><a class="btn btn-sm btn-soft" href="tel:${phone}">${ctx.dt("اتصال", "Appeler")}</a></div>
+            <div class="u-flex u-gap-5 u-mt-9 u-wrap"><a class="btn btn-sm btn-whatsapp" href="${wa}" target="_blank" rel="noopener">${ctx.icon("whatsapp")} ${ctx.dt("واتساب", "WhatsApp")}</a><a class="btn btn-sm btn-soft" href="tel:${phone}">${ctx.dt("اتصال", "Appeler")}</a></div>
           </div>`;
   }
 
   function orderManagementSection(order) {
     const payment = ctx.esc(order.payment?.name || "");
     const source = ctx.esc(order.source || "whatsapp");
-    return `<div class="order-detail-section" style="margin-top:10px">
+    return `<div class="order-detail-section u-mt-10">
             <h4>${ctx.dt("إدارة الطلب", "Gestion")}</h4>
             <div class="field"><label>${ctx.dt("الحالة", "Statut")}</label><select data-order-status="${ctx.esc(order.id)}">${ctx.statusOptions(order.status)}</select></div>
-            <div class="field" style="margin-top:8px"><label>${ctx.dt("ملاحظة داخلية", "Note interne")}</label><textarea rows="3" data-order-note="${ctx.esc(order.id)}">${ctx.esc(order.internalNote || "")}</textarea></div>
-            <p class="form-note" style="margin-top:8px">${ctx.dt("الدفع", "Paiement")}: <strong>${payment}</strong> · ${ctx.dt("المصدر", "Source")}: ${source}</p>
+            <div class="field u-mt-8"><label>${ctx.dt("ملاحظة داخلية", "Note interne")}</label><textarea rows="3" data-order-note="${ctx.esc(order.id)}">${ctx.esc(order.internalNote || "")}</textarea></div>
+            <p class="form-note u-mt-8">${ctx.dt("الدفع", "Paiement")}: <strong>${payment}</strong> · ${ctx.dt("المصدر", "Source")}: ${source}</p>
           </div>`;
   }
 
   function orderDocumentsSection(order, statusColor) {
     const printIcon = ctx.icon("print");
     const label = ctx.esc(ctx.lng(ctx.R.statusMeta(order.status).label));
-    return `<div class="order-detail-section" style="margin-top:10px">
+    return `<div class="order-detail-section u-mt-10">
             <h4>${ctx.dt("المستندات", "Documents")}</h4>
-            <div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn btn-sm btn-soft" data-action="print-invoice" data-id="${ctx.esc(order.id)}">${printIcon} ${ctx.dt("فاتورة", "Facture")}</button><button class="btn btn-sm btn-soft" data-action="print-label" data-id="${ctx.esc(order.id)}">${ctx.dt("ملصق شحن", "Étiquette")}</button></div>
-            <div style="margin-top:12px"><span class="status-pill" style="--status:${statusColor}">${label}</span></div>
+            <div class="u-flex u-gap-5 u-wrap"><button class="btn btn-sm btn-soft" data-action="print-invoice" data-id="${ctx.esc(order.id)}">${printIcon} ${ctx.dt("فاتورة", "Facture")}</button><button class="btn btn-sm btn-soft" data-action="print-label" data-id="${ctx.esc(order.id)}">${ctx.dt("ملصق شحن", "Étiquette")}</button></div>
+            <div class="u-mt-12"><span class="status-pill" data-sv="status:${ctx.esc(statusColor)}">${label}</span></div>
           </div>`;
   }
 
@@ -248,7 +255,7 @@ export function install(ctx) {
             ${items}
             ${orderTotalsHTML(order)}
           </div>
-          <div class="order-detail-section" style="margin-top:10px">
+          <div class="order-detail-section u-mt-10">
             <h4>${ctx.dt("ملاحظات العميل", "Notes du client")}</h4>
             <p>${ctx.esc(order.customer?.notes || ctx.dt("لا توجد ملاحظات", "Aucune note"))}</p>
           </div>

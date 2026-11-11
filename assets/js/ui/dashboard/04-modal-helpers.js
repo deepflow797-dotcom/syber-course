@@ -172,7 +172,7 @@ export function install(ctx) {
     </div></div>`;
   }
   function editorFooter(canDelete = false, deleteAction = "") {
-    return `${canDelete ? `<button class="btn btn-danger btn-sm" type="button" data-action="${ctx.esc(deleteAction)}">${ctx.icon("trash")} ${ctx.dt("حذف", "Supprimer")}</button>` : ""}<span style="flex:1"></span><button class="btn btn-soft btn-sm" type="button" data-action="close-modal">${ctx.dt("إلغاء", "Annuler")}</button><button class="btn btn-primary btn-sm" type="button" data-action="save-editor">${ctx.icon("check")} ${ctx.dt("حفظ", "Enregistrer")}</button>`;
+    return `${canDelete ? `<button class="btn btn-danger btn-sm" type="button" data-action="${ctx.esc(deleteAction)}">${ctx.icon("trash")} ${ctx.dt("حذف", "Supprimer")}</button>` : ""}<span class="u-grow"></span><button class="btn btn-soft btn-sm" type="button" data-action="close-modal">${ctx.dt("إلغاء", "Annuler")}</button><button class="btn btn-primary btn-sm" type="button" data-action="save-editor">${ctx.icon("check")} ${ctx.dt("حفظ", "Enregistrer")}</button>`;
   }
 
   function statusOptions(selected) {

@@ -30,7 +30,7 @@ export function install(ctx) {
         .map((slide, i) => {
           const image = slide.image || "assets/products/smartphone-pro-128.svg";
           const light = slide.dark === false;
-          return `<div class="hero-slide hero-banner ${light ? "hero-light" : "hero-dark"}${i === 0 ? " active" : ""}" style="background:${ctx.esc(slide.bg || "linear-gradient(135deg,#1f1f2e,#39255b)")}">
+          return `<div class="hero-slide hero-banner ${light ? "hero-light" : "hero-dark"}${i === 0 ? " active" : ""} u-tint" data-sv="bg:${ctx.esc(slide.bg || "linear-gradient(135deg,#1f1f2e,#39255b)")}">
           <div class="container hero-inner">
             <div class="hero-copy">
               <span class="hero-eyebrow">${ctx.esc(ctx.L(ctx.SET.storeName))} · ${ctx.esc(ctx.L(ctx.SET.city))}</span>
@@ -285,7 +285,7 @@ export function install(ctx) {
           ${reviews
             .map(
               (review) => `<article class="review-card">
-            <span class="review-avatar" style="background:${ctx.esc(review.color || "#2e7d6f")}">${ctx.esc((review.name || "R").slice(0, 1))}</span>
+            <span class="review-avatar u-tint" data-sv="bg:${ctx.esc(review.color || "#2e7d6f")}">${ctx.esc((review.name || "R").slice(0, 1))}</span>
             <div class="review-name">${ctx.esc(review.name)}</div>
             ${starsHTML(Number(review.rating) || 5)}
             <div class="review-title">${ctx.esc(ctx.L(review.title))}</div>
@@ -388,7 +388,7 @@ export function install(ctx) {
     const shown = items.slice(0, COL.shown);
     grid.innerHTML = shown.length
       ? shown.map(ctx.cardHTML).join("")
-      : `<div class="empty-state" style="grid-column:1/-1"><h2>${ctx.esc(ctx.t("noProducts"))}</h2><p>${ctx.esc(ctx.t("tryFilter"))}</p><a class="btn btn-primary" href="collection.html?handle=all">${ctx.esc(ctx.t("browseAll"))}</a></div>`;
+      : `<div class="empty-state u-span-full"><h2>${ctx.esc(ctx.t("noProducts"))}</h2><p>${ctx.esc(ctx.t("tryFilter"))}</p><a class="btn btn-primary" href="collection.html?handle=all">${ctx.esc(ctx.t("browseAll"))}</a></div>`;
     const count = document.querySelector(".collection-head .count");
     if (count) count.textContent = `${items.length} ${items.length === 1 ? ctx.t("product") : ctx.t("products")}`;
     const more = document.getElementById("load-more");

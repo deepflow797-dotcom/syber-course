@@ -42,7 +42,7 @@ export function productExtraHTML(ctx, p, reviews, productRating) {
             ${reviews
               .map(
                 (review) => `<article class="review-card">
-              <span class="review-avatar" style="background:${ctx.esc(review.color || "#2e7d6f")}">${ctx.esc((review.name || "R").slice(0, 1))}</span>
+              <span class="review-avatar u-tint" data-sv="bg:${ctx.esc(review.color || "#2e7d6f")}">${ctx.esc((review.name || "R").slice(0, 1))}</span>
               <div class="review-name">${ctx.esc(review.name)} ${review.verified ? `<i>${ctx.esc(ctx.t("verifiedBuyer"))}</i>` : ""}</div>
               ${ctx.starsHTML(Number(review.rating) || 5)}
               <div class="review-title">${ctx.esc(ctx.L(review.title))}</div>
@@ -65,7 +65,7 @@ export function relatedHTML(ctx, items) {
 
 /** Empty state when the handle does not resolve to a product. */
 export function productNotFoundHTML(ctx) {
-  return `<div class="empty-state" style="grid-column:1/-1">
+  return `<div class="empty-state u-span-full">
         <h2>${ctx.esc(ctx.t("productNotFound"))}</h2>
         <p>${ctx.esc(ctx.t("productNotFoundText"))}</p>
         <a class="btn btn-primary" href="collection.html?handle=all">${ctx.esc(ctx.t("browseAll"))}</a>

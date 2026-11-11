@@ -19,7 +19,7 @@ export function install(ctx) {
     }
     const customerRow = (review, actions) => `<div class="list-row review-pending-row">
       <div class="grow">
-        <strong>${ctx.esc(review.customerName)} <span style="color:#f5a623">${"★".repeat(Number(review.rating) || 5)}</span></strong>
+        <strong>${ctx.esc(review.customerName)} <span class="u-warn">${"★".repeat(Number(review.rating) || 5)}</span></strong>
         <small>${ctx.esc(review.productHandle)} — ${ctx.esc(ctx.L(review.title))}</small>
         <p class="review-body-preview">${ctx.esc(String(ctx.L(review.body)).slice(0, 160))}${String(ctx.L(review.body)).length > 160 ? "…" : ""}</p>
         <small class="review-date">${ctx.esc(ctx.R.formatDate(review.createdAt))}${review.email ? ` · ${ctx.esc(review.email)}` : ""}</small>
@@ -35,12 +35,12 @@ export function install(ctx) {
       </div>
       <div class="dash-panel active" data-dash-panel="reviews-home">
         <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("آراء الصفحة الرئيسية", "Avis page d’accueil")}</h3><button class="btn btn-primary btn-sm" data-action="add-home-review">${ctx.icon("plus")} ${ctx.dt("إضافة", "Ajouter")}</button></div><div class="dash-card-body"><div class="list-editor">
-          ${home.map((review, index) => `<div class="list-row"><div class="grow"><strong>${ctx.esc(review.name)} <span style="color:#f5a623">${"★".repeat(Number(review.rating) || 5)}</span></strong><small>${ctx.esc(ctx.L(review.title))} — ${ctx.esc(ctx.L(review.city))}</small></div><button class="btn btn-sm btn-soft" data-action="edit-home-review" data-index="${index}">${ctx.icon("edit")}</button><button class="btn btn-sm btn-soft" data-action="delete-home-review" data-index="${index}">${ctx.icon("trash")}</button></div>`).join("") || `<div class="empty-dash">${ctx.dt("لا توجد تقييمات.", "Aucun avis.")}</div>`}
+          ${home.map((review, index) => `<div class="list-row"><div class="grow"><strong>${ctx.esc(review.name)} <span class="u-warn">${"★".repeat(Number(review.rating) || 5)}</span></strong><small>${ctx.esc(ctx.L(review.title))} — ${ctx.esc(ctx.L(review.city))}</small></div><button class="btn btn-sm btn-soft" data-action="edit-home-review" data-index="${index}">${ctx.icon("edit")}</button><button class="btn btn-sm btn-soft" data-action="delete-home-review" data-index="${index}">${ctx.icon("trash")}</button></div>`).join("") || `<div class="empty-dash">${ctx.dt("لا توجد تقييمات.", "Aucun avis.")}</div>`}
         </div></div></article>
       </div>
       <div class="dash-panel" data-dash-panel="reviews-products">
         <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("تقييمات المنتجات", "Avis produits")}</h3><button class="btn btn-soft" data-action="add-product-review">${ctx.icon("plus")} ${ctx.dt("إضافة", "Ajouter")}</button></div><div class="dash-card-body"><div class="list-editor">
-          ${(ctx.model.reviews || []).map((review, index) => `<div class="list-row"><div class="grow"><strong>${ctx.esc(review.name)} <span style="color:#f5a623">${"★".repeat(Number(review.rating) || 5)}</span></strong><small>${ctx.esc(review.handle)} — ${ctx.esc(ctx.L(review.title))}</small></div><label class="toggle"><input type="checkbox" data-review-approved="${index}" ${review.approved !== false ? "checked" : ""}><span></span></label><button class="btn btn-sm btn-soft" data-action="edit-product-review" data-index="${index}">${ctx.icon("edit")}</button><button class="btn btn-sm btn-soft" data-action="delete-product-review" data-index="${index}">${ctx.icon("trash")}</button></div>`).join("") || `<div class="empty-dash">${ctx.dt("لا توجد تقييمات منتجات مخصصة.", "Aucun avis produit dédié.")}</div>`}
+          ${(ctx.model.reviews || []).map((review, index) => `<div class="list-row"><div class="grow"><strong>${ctx.esc(review.name)} <span class="u-warn">${"★".repeat(Number(review.rating) || 5)}</span></strong><small>${ctx.esc(review.handle)} — ${ctx.esc(ctx.L(review.title))}</small></div><label class="toggle"><input type="checkbox" data-review-approved="${index}" ${review.approved !== false ? "checked" : ""}><span></span></label><button class="btn btn-sm btn-soft" data-action="edit-product-review" data-index="${index}">${ctx.icon("edit")}</button><button class="btn btn-sm btn-soft" data-action="delete-product-review" data-index="${index}">${ctx.icon("trash")}</button></div>`).join("") || `<div class="empty-dash">${ctx.dt("لا توجد تقييمات منتجات مخصصة.", "Aucun avis produit dédié.")}</div>`}
         </div></div></article>
       </div>
       <div class="dash-panel" data-dash-panel="reviews-customers">
@@ -64,7 +64,7 @@ export function install(ctx) {
         </div></article>
         ${
           approved.length
-            ? `<article class="dash-card" style="margin-top:14px"><div class="dash-card-head"><h3>${ctx.dt("المعتمدة", "Approuvés")}</h3><span class="badge-soft green">${approved.length}</span></div><div class="dash-card-body"><div class="list-editor">
+            ? `<article class="dash-card u-mt-14"><div class="dash-card-head"><h3>${ctx.dt("المعتمدة", "Approuvés")}</h3><span class="badge-soft green">${approved.length}</span></div><div class="dash-card-body"><div class="list-editor">
           ${approved
             .map((review) =>
               customerRow(
@@ -81,7 +81,7 @@ export function install(ctx) {
         }
         ${
           rejected.length
-            ? `<article class="dash-card" style="margin-top:14px"><div class="dash-card-head"><h3>${ctx.dt("المرفوضة", "Rejetés")}</h3><span class="badge-soft">${rejected.length}</span></div><div class="dash-card-body"><div class="list-editor">
+            ? `<article class="dash-card u-mt-14"><div class="dash-card-head"><h3>${ctx.dt("المرفوضة", "Rejetés")}</h3><span class="badge-soft">${rejected.length}</span></div><div class="dash-card-body"><div class="list-editor">
           ${rejected
             .map((review) =>
               customerRow(

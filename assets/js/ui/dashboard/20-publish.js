@@ -18,7 +18,7 @@ export function install(ctx) {
         <div><span>${ctx.dt("آخر تعديل", "Dernière modification")}</span><strong>${ctx.esc(ctx.fmtDateTime(ctx.model.updatedAt))}</strong></div>
         <div><span>${ctx.dt("مساحة المتجر", "Boutique")}</span><strong>${ctx.R.remote ? "Supabase" : ctx.dt("محلي", "Local")} · MRU</strong></div>
       </div>
-      <div style="display:flex;align-items:flex-start;gap:8px;background:var(--surface-2);border-radius:8px;padding:11px;margin-top:13px;font-size:10px;color:var(--muted);line-height:1.6">${ctx.icon("info")}<span>${ctx.dt("سيظهر المحتوى والألوان والمنتجات للزوار خلال ثوانٍ. يمكنك فتح المعاينة أولًا للتأكد.", "Le contenu, les couleurs et les produits seront visibles en quelques secondes. Ouvrez l’aperçu pour vérifier.")}</span></div>`,
+      <div class="u-flex u-items-start u-gap-8 u-surface-2 u-r-8 u-p-11 u-mt-13 u-fs-10 u-muted u-lh-16">${ctx.icon("info")}<span>${ctx.dt("سيظهر المحتوى والألوان والمنتجات للزوار خلال ثوانٍ. يمكنك فتح المعاينة أولًا للتأكد.", "Le contenu, les couleurs et les produits seront visibles en quelques secondes. Ouvrez l’aperçu pour vérifier.")}</span></div>`,
       {
         footer: `<button class="btn btn-soft btn-sm" data-action="close-modal">${ctx.dt("إلغاء", "Annuler")}</button><button class="btn btn-soft btn-sm" data-action="preview">${ctx.icon("preview")} ${ctx.dt("معاينة", "Aperçu")}</button><button class="btn btn-primary btn-sm" data-action="confirm-publish">${ctx.icon("publish")} ${ctx.dt("نشر", "Publier")}</button>`
       }

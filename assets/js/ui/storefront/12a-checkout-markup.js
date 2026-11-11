@@ -42,7 +42,7 @@ export function checkoutPageHTML(ctx, data) {
                     (
                       payment,
                       i
-                    ) => `<label class="payment-card ${i === 0 ? "active" : ""}" style="--pay:${ctx.esc(payment.color)}">
+                    ) => `<label class="payment-card ${i === 0 ? "active" : ""} u-pay-rail" data-sv="pay:${ctx.esc(payment.color)}">
                   <input type="radio" name="co-payment" value="${ctx.esc(payment.id)}" ${i === 0 ? "checked" : ""}>
                   <span class="payment-mark">${payment.image || payment.logo ? `<img src="${ctx.esc(payment.image || payment.logo)}" alt="${ctx.esc(ctx.L(payment.name))}">` : ctx.esc(ctx.L(payment.name).slice(0, 2))}</span>
                   <span class="payment-copy"><strong>${ctx.esc(ctx.L(payment.name))}</strong><small>${ctx.esc(ctx.L(payment.note))}</small></span>
@@ -79,7 +79,7 @@ export function checkoutPageHTML(ctx, data) {
             </div>
             <button class="btn btn-primary btn-block btn-whatsapp" type="button" id="place-order" ${!open ? "disabled" : ""}>${ctx.ICON.whatsapp} ${ctx.esc(!open ? ctx.t("closedTitle") : ctx.t("placeOrder"))}</button>
             <p class="checkout-redirect-note">${ctx.esc(ctx.t("redirecting"))}</p>
-            <div class="accepted-pay">${payments.map((payment) => `<span style="--pay:${ctx.esc(payment.color)}">${ctx.esc(ctx.L(payment.name))}</span>`).join("")}</div>
+            <div class="accepted-pay">${payments.map((payment) => `<span class="u-pay-rail" data-sv="pay:${ctx.esc(payment.color)}">${ctx.esc(ctx.L(payment.name))}</span>`).join("")}</div>
             <div class="summary-help">${ctx.ICON.whatsapp}<span>${ctx.esc(ctx.t("contactUs"))}: <a class="phone-ltr" href="https://wa.me/${ctx.esc(ctx.SET.whatsapp)}" target="_blank" rel="noopener">${ctx.esc(ctx.SET.phoneDisplay)}</a></span></div>
           </aside>
         </div>

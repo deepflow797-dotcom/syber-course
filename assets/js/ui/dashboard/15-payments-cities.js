@@ -10,26 +10,26 @@ export function install(ctx) {
       <div class="dash-view-head"><div><h2>${ctx.dt("الدفع والتوصيل", "Paiement & livraison")}</h2><p>${ctx.dt("فعّل طرق الدفع المحلية وحدد رسوم المدن. يمكنك رفع شعار لكل طريقة دفع.", "Activez les paiements locaux et les frais par ville. Vous pouvez télécharger un logo pour chaque moyen de paiement.")}</p></div></div>
       <div class="dash-tabs"><button class="active" data-dash-tab="pay-methods">${ctx.dt("طرق الدفع", "Moyens de paiement")}</button><button data-dash-tab="pay-cities">${ctx.dt("مدن التوصيل", "Villes de livraison")}</button><button data-dash-tab="pay-shipping">${ctx.dt("إعدادات الشحن", "Réglages livraison")}</button></div>
       <div class="dash-panel active" data-dash-panel="pay-methods">
-        <div class="dash-view-actions" style="justify-content:flex-end;margin-bottom:9px"><button class="btn btn-primary btn-sm" data-action="add-payment">${ctx.icon("plus")} ${ctx.dt("طريقة دفع", "Moyen de paiement")}</button></div>
+        <div class="dash-view-actions u-justify-end u-mb-9"><button class="btn btn-primary btn-sm" data-action="add-payment">${ctx.icon("plus")} ${ctx.dt("طريقة دفع", "Moyen de paiement")}</button></div>
         <div class="dash-grid cols-2">
           ${(ctx.model.settings.payments || [])
             .map(
               (payment, index) => `<article class="dash-card"><div class="dash-card-body">
-            <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
-              ${payment.image || payment.logo ? `<img src="${ctx.esc(payment.image || payment.logo)}" alt="" style="width:36px;height:36px;border-radius:9px;object-fit:contain">` : `<span style="width:36px;height:36px;border-radius:9px;background:${ctx.esc(payment.color)};color:#fff;display:grid;place-items:center;font-size:10px;font-weight:800">${ctx.esc(String(ctx.lng(payment.name)).slice(0, 2))}</span>`}
-              <div style="flex:1"><strong style="font-size:12px">${ctx.esc(ctx.lng(payment.name))}</strong><br><small style="font-size:8px;color:var(--soft-muted)">${ctx.esc(ctx.lng(payment.note))}</small></div>
+            <div class="u-flex u-items-center u-gap-9 u-mb-10">
+              ${payment.image || payment.logo ? `<img src="${ctx.esc(payment.image || payment.logo)}" alt="" class="u-sq-36 u-r-9 u-fit-contain">` : `<span class="u-avatar-sm u-tint" data-sv="bg:${ctx.esc(payment.color)}">${ctx.esc(String(ctx.lng(payment.name)).slice(0, 2))}</span>`}
+              <div class="u-grow"><strong class="u-fs-12">${ctx.esc(ctx.lng(payment.name))}</strong><br><small class="u-fs-8 u-soft">${ctx.esc(ctx.lng(payment.note))}</small></div>
               <label class="toggle"><input type="checkbox" data-payment-active="${index}" ${payment.active !== false ? "checked" : ""}><span></span></label>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div class="u-flex u-items-center u-justify-between u-gap-8">
               <span class="badge-soft ${payment.discount ? "orange" : ""}">${payment.discount ? `-${payment.discount}%` : ctx.dt("بدون خصم", "Sans remise")}</span>
               <div class="cell-actions"><button class="btn btn-sm btn-soft" data-action="edit-payment" data-index="${index}">${ctx.icon("edit")}</button><button class="btn btn-sm btn-soft" data-action="delete-payment" data-index="${index}">${ctx.icon("trash")}</button></div>
             </div>
-            ${payment.image || payment.logo ? `<div class="image-preview" style="margin-top:8px"><img src="${ctx.esc(payment.image || payment.logo)}" alt="" style="max-width:100%;max-height:40px;border-radius:6px"></div>` : ""}
+            ${payment.image || payment.logo ? `<div class="image-preview u-mt-8"><img class="u-fit-contain u-r-6" src="${ctx.esc(payment.image || payment.logo)}" alt=""></div>` : ""}
           </div></article>`
             )
             .join("")}
         </div>
-        <article class="dash-card" style="margin-top:14px"><div class="dash-card-body">${ctx.biField(ctx.dt("نص عرض الدفع", "Texte offre paiement"), "settings.paymentOffer", { type: "textarea", rows: 2 })}<p class="form-note" style="margin-top:8px">${ctx.dt("يظهر هذا النص في صفحة المنتج وصفحة الدفع. البنكيلي يطبق الخصم المحدد أعلاه تلقائيًا.", "Ce texte apparaît sur la fiche produit et au checkout. Bankily applique automatiquement la remise.")}</p></div></article>
+        <article class="dash-card u-mt-14"><div class="dash-card-body">${ctx.biField(ctx.dt("نص عرض الدفع", "Texte offre paiement"), "settings.paymentOffer", { type: "textarea", rows: 2 })}<p class="form-note u-mt-8">${ctx.dt("يظهر هذا النص في صفحة المنتج وصفحة الدفع. البنكيلي يطبق الخصم المحدد أعلاه تلقائيًا.", "Ce texte apparaît sur la fiche produit et au checkout. Bankily applique automatiquement la remise.")}</p></div></article>
       </div>
       <div class="dash-panel" data-dash-panel="pay-cities">
         <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("مدن التوصيل", "Villes de livraison")}</h3><button data-action="add-city">${ctx.icon("plus")} ${ctx.dt("إضافة مدينة", "Ajouter une ville")}</button></div><div class="dash-card-body"><div class="dash-table-wrap"><table class="dash-table"><thead><tr><th>${ctx.dt("المدينة", "Ville")}</th><th>${ctx.dt("الرسوم", "Frais")}</th><th>${ctx.dt("المدة", "Délai")}</th><th>${ctx.dt("نشطة", "Active")}</th><th></th></tr></thead><tbody>

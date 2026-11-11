@@ -52,7 +52,7 @@ export function install(ctx) {
     const titleCount = document.getElementById("cart-title-count");
     if (titleCount) titleCount.textContent = count ? `(${count})` : "";
     if (!items.length) {
-      body.innerHTML = `<div class="cart-empty">${ctx.ICON.bag}<p>${ctx.esc(ctx.t("emptyCart"))}</p><a class="btn btn-primary" href="collection.html?handle=all" style="margin-top:16px">${ctx.esc(ctx.t("shopNow"))}</a></div>`;
+      body.innerHTML = `<div class="cart-empty">${ctx.ICON.bag}<p>${ctx.esc(ctx.t("emptyCart"))}</p><a class="btn btn-primary u-mt-16" href="collection.html?handle=all">${ctx.esc(ctx.t("shopNow"))}</a></div>`;
       foot.innerHTML = "";
       return;
     }

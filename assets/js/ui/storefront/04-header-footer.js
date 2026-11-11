@@ -201,8 +201,8 @@ export function install(ctx) {
                 .filter((p) => p.active)
                 .map((p) =>
                   p.image || p.logo
-                    ? `<span class="pay-badge pay-image" style="--pay:${ctx.esc(p.color)}"><img src="${ctx.esc(p.image || p.logo)}" alt="${ctx.esc(ctx.L(p.name))}" loading="lazy"></span>`
-                    : `<span class="pay-badge pay-text" style="--pay:${ctx.esc(p.color)}">${ctx.esc(ctx.L(p.name))}</span>`
+                    ? `<span class="pay-badge pay-image u-pay-rail" data-sv="pay:${ctx.esc(p.color)}"><img src="${ctx.esc(p.image || p.logo)}" alt="${ctx.esc(ctx.L(p.name))}" loading="lazy"></span>`
+                    : `<span class="pay-badge pay-text u-pay-rail" data-sv="pay:${ctx.esc(p.color)}">${ctx.esc(ctx.L(p.name))}</span>`
                 )
                 .join("")}
             </div>

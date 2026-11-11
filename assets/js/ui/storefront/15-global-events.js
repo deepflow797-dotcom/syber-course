@@ -91,9 +91,8 @@ export function install(ctx) {
     box.id = "consent-banner";
     box.setAttribute("role", "dialog");
     box.setAttribute("aria-live", "polite");
-    box.style.cssText =
-      "position:fixed;inset-inline:12px;bottom:12px;z-index:9999;max-width:560px;margin-inline:auto;background:var(--card,#fff);color:inherit;border:1px solid rgba(0,0,0,.12);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:14px";
-    box.innerHTML = `<span style="flex:1;min-width:200px">${ctx.esc(ar ? "نستخدم أدوات قياس (Meta/TikTok/Google) لتحسين المتجر. هل توافق؟" : "Nous utilisons des outils de mesure (Meta/TikTok/Google) pour améliorer la boutique. Acceptez-vous ?")}</span>
+    box.className = "consent-banner";
+    box.innerHTML = `<span class="u-grow u-min-200">${ctx.esc(ar ? "نستخدم أدوات قياس (Meta/TikTok/Google) لتحسين المتجر. هل توافق؟" : "Nous utilisons des outils de mesure (Meta/TikTok/Google) pour améliorer la boutique. Acceptez-vous ?")}</span>
       <button type="button" class="btn btn-sm btn-soft" data-consent="denied">${ctx.esc(ar ? "رفض" : "Refuser")}</button>
       <button type="button" class="btn btn-sm btn-primary" data-consent="granted">${ctx.esc(ar ? "موافق" : "Accepter")}</button>`;
     box.addEventListener("click", (e) => {

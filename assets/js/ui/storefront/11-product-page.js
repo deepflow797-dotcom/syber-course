@@ -158,7 +158,7 @@ export function install(ctx) {
 
   function colorButtonHTML(ctx, p, o, val, active) {
     const c = (p.colors || []).find((x) => x.name === val);
-    return `<button class="opt-btn color-opt ${active ? "active" : ""}" type="button" data-opt="${ctx.esc(o.name)}" data-value="${ctx.esc(val)}" data-color-hex="${ctx.esc(c?.hex || "")}"><span class="color-dot" style="background:${c ? c.hex : "#ccc"}"></span>${ctx.esc(val)}</button>`;
+    return `<button class="opt-btn color-opt ${active ? "active" : ""}" type="button" data-opt="${ctx.esc(o.name)}" data-value="${ctx.esc(val)}" data-color-hex="${ctx.esc(c?.hex || "")}"><span class="color-dot u-tint" data-sv="bg:${c ? c.hex : "#ccc"}"></span>${ctx.esc(val)}</button>`;
   }
 
   function optionButtonHTML(ctx, o, val, active) {
@@ -314,7 +314,7 @@ export function install(ctx) {
                       (r) => `
               <article class="review-card">
                 <div class="review-header">
-                  <span class="review-avatar" style="background:${hashColor(String(r.customerName || "R"))}">${ctx.esc(String(r.customerName || "R").slice(0, 1))}</span>
+                  <span class="review-avatar u-tint" data-sv="bg:${hashColor(String(r.customerName || "R"))}">${ctx.esc(String(r.customerName || "R").slice(0, 1))}</span>
                   <div>
                     <strong>${ctx.esc(r.customerName || "")}${r.verified ? ` <span class="verified-badge">${ctx.esc(ctx.t("verifiedBuyer"))}</span>` : ""}</strong>
                     <div class="review-meta">${renderRatingStars(Number(r.rating) || 5)} <time>${ctx.esc(ctx.R.formatDate(r.createdAt))}</time></div>

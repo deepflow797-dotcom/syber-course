@@ -42,8 +42,8 @@ dashboard **reviews** view crash in 1.2.x (`L is not defined`).
 | Architecture | `npm run lint` | ≤600 lines/file, layer boundaries, syntax, brand-neutral, no dangling asset refs |
 | ESLint strict | `npm run lint:js` | no-unused-vars, eqeqeq, no-var, prefer-const, max-depth 4, complexity 15 (legacy services/ui: warning + ratchet in `.complexity-baseline.json`) |
 | Format | `npm run format:check` | Prettier, printWidth 120, double quotes |
-| Types | `npm run typecheck` | `tsc` over `// @ts-check` modules (services, data, domain, core, assemblers) + `types/global.d.ts`; 0 `@ts-ignore` |
-| Unit | `npm test` | 64 tests: pricing, mappers, i18n parity, sanitizer, booted runtime (jsdom), tooling |
+| Types | `npm run typecheck` | `tsc` over `// @ts-check` modules (core, data, domain, services, state, app/dashboard assemblers, all `ui/dashboard` + `ui/storefront` modules) + `types/global.d.ts`; 0 `@ts-ignore` |
+| Unit | `npm test` | 109 tests: pricing, mappers, i18n parity, sanitizer, booted runtime (jsdom), tooling |
 | Smoke | `npm run test:smoke` | every page + 18 dashboard routes render in jsdom without errors |
 | Database | `npm run test:db` | migrations + RPC + RLS on PostgreSQL 16 (PGlite) and the **fresh-store scenario** (ALL_IN_ONE.sql incl. seed → first order OK → idempotent) |
 | E2E | `npm run test:e2e` | Playwright/Chromium: order flow, dashboard routes, product publish → storefront, i18n + consent |

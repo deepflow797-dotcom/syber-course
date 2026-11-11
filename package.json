@@ -1,0 +1,38 @@
+{
+  "name": "restore-store",
+  "version": "1.6.0",
+  "private": true,
+  "type": "module",
+  "description": "Static storefront + dashboard template (Supabase backend), brand-neutral, one isolated copy per merchant",
+  "scripts": {
+    "build": "node scripts/build-config.mjs",
+    "serve": "python3 -m http.server 8100 --bind 127.0.0.1",
+    "lint": "node scripts/check-boundaries.mjs && node scripts/check-syntax.mjs && node scripts/check-brand.mjs && node scripts/check-assets.mjs && echo 'lint ok'",
+    "test": "node --test tests/*.test.mjs",
+    "test:db": "node tests/db/migrations.integration.mjs && node tests/db/fresh-store.integration.mjs",
+    "test:smoke": "node tests/smoke/pages.smoke.mjs",
+    "lint:js": "eslint assets/js sw.js scripts tests e2e && node scripts/check-complexity.mjs",
+    "check": "npm run lint && npm run lint:js && npm run format:check && npm run typecheck && npm test && npm run test:smoke && npm run test:db",
+    "brand": "node scripts/apply-brand.mjs",
+    "new-client": "node scripts/new-client.mjs",
+    "demo-catalog": "node scripts/demo/make-demo-catalog.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
+    "typecheck": "tsc -p jsconfig.json",
+    "format": "prettier --write \"assets/js/**/*.js\" \"scripts/**/*.mjs\" \"tests/**/*.mjs\" \"e2e/**/*.mjs\" \"*.js\" \"*.mjs\" \"*.json\"",
+    "format:check": "prettier --check \"assets/js/**/*.js\" \"scripts/**/*.mjs\" \"tests/**/*.mjs\" \"e2e/**/*.mjs\" \"*.js\" \"*.mjs\" \"*.json\"",
+    "check:full": "npm run check && npm run test:e2e && bash scripts/check-secrets.sh"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.2.17",
+    "@playwright/test": "^1.65.0",
+    "eslint": "^9.14.0",
+    "globals": "^15.12.0",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.3"
+  }
+}

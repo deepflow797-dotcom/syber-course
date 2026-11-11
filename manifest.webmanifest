@@ -1,0 +1,68 @@
+{
+  "id": "./",
+  "name": "متجر تجريبي | منتجات أصلية وتوصيل سريع",
+  "short_name": "متجر تجريبي",
+  "description": "منتجات أصلية وتوصيل سريع",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "categories": [
+    "shopping",
+    "electronics"
+  ],
+  "icons": [
+    {
+      "src": "assets/img/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "تسوق كل المنتجات",
+      "short_name": "المنتجات",
+      "url": "./collection.html?handle=all",
+      "icons": [
+        {
+          "src": "assets/img/pwa-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "حسابي وطلباتي",
+      "short_name": "حسابي",
+      "url": "./account.html",
+      "icons": [
+        {
+          "src": "assets/img/pwa-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}

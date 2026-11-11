@@ -30,6 +30,8 @@ const SHELL = [
   "assets/js/i18n/index.js",
   "assets/js/services/00-config.js",
   "assets/js/services/01-default-content.js",
+  "assets/js/services/01a-default-state.js",
+  "assets/js/services/01b-default-products.js",
   "assets/js/services/02-state-hydration.js",
   "assets/js/services/03-shared-utils.js",
   "assets/js/services/04-staff-auth.js",

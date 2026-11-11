@@ -12,6 +12,9 @@ const URL_ = process.argv[4] || "http://localhost:8100/?handle=iphone-13-pro-max
 if (!PAGE) {
   // orchestrate: one child process per page (fresh globals each time)
   const { spawnSync } = await import("node:child_process");
+  // print.html is a shell filled at runtime from sessionStorage and guide.html is a static document, so
+  // both are checked for a clean render rather than for a store-sized body.
+  const SHELL_PAGES = new Set(["print.html", "guide.html"]);
   const pages = [
     "index.html",
     "collection.html",
@@ -22,7 +25,9 @@ if (!PAGE) {
     "account.html",
     "blog.html",
     "blog-post.html",
-    "dashboard.html"
+    "dashboard.html",
+    "print.html",
+    "guide.html"
   ];
   let failed = 0;
   for (const p of pages) {
@@ -34,10 +39,11 @@ if (!PAGE) {
     } catch {
       fp = null;
     }
+    const minBody = SHELL_PAGES.has(p) ? 200 : 5000;
     const bad =
       !fp ||
       fp.errors.length ||
-      fp.bodyLen < 5000 ||
+      fp.bodyLen < minBody ||
       (p === "dashboard.html" && (fp.hasLogin || Object.values(fp.routesOut).some((n) => n < 5000)));
     if (bad) failed++;
     console.log(
@@ -143,12 +149,17 @@ if (PAGE === "dashboard.html") {
     errors.push("login:" + e.message);
   }
 }
-await import(
-  pathToFileURL(path.join(ROOT, PAGE === "dashboard.html" ? "assets/js/dashboard.js" : "assets/js/app.js")).href + q
-);
+if (PAGE === "print.html") {
+  // entry of the printable document: no state, no storefront boot
+  await import(pathToFileURL(path.join(ROOT, "assets/js/print.js")).href + q);
+} else {
+  await import(
+    pathToFileURL(path.join(ROOT, PAGE === "dashboard.html" ? "assets/js/dashboard.js" : "assets/js/app.js")).href + q
+  );
+}
 await new Promise((r) => setTimeout(r, 600));
 // exercise a few interactions
-if (PAGE !== "dashboard.html") {
+if (PAGE !== "dashboard.html" && PAGE !== "print.html") {
   for (const sel of [
     "[data-add-to-cart]",
     ".add-to-cart",

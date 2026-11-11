@@ -192,7 +192,7 @@ the dashboard.
 - [ ] **Deploy server-side order validation:** deploy `supabase/functions/create-order` with `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `ALLOWED_ORIGIN` (your site URL). The app now **requires** server validation in remote mode (`requireServerOrders:true`); if the function is unavailable, checkout fails instead of accepting client-priced totals.
 - [ ] **Run hardened RLS schema:** apply `supabase/schema.sql` (staff-scoped policies, no public abandoned-cart/order inserts, atomic `restore_create_order` RPC, least-privilege grants).
 - [ ] **Never expose secrets:** only the anon/publishable key belongs in client config. Never commit `service_role`, `.env.local`, or `.vercel/project.json`. If leaked, rotate/revoke tokens and purge git history.
-- [ ] **Review CSP:** `script-src` no longer allows `unsafe-eval`/`unsafe-inline`; `style-src` still allows `unsafe-inline` for compatibility. Move to nonces/hashes when refactoring inline styles. Third-party pixels increase attack surface—enable only what you need.
+- [ ] **Review CSP:** `script-src` and `style-src` both drop `unsafe-inline`/`unsafe-eval` — there are no inline scripts, no `style` attributes and no `<style>` blocks; dynamic styling goes through `data-sv` + `assets/js/ui/style-vars.js` (CSSOM) and the utility layer in `assets/css/restore.css`. Keep it that way: `npm run lint` fails on a new inline style. Third-party pixels increase attack surface—enable only what you need.
 - [ ] **XSS hygiene:** user/CMS content is escaped in key rendering paths and a `sanitizeRichHTML` helper is available; review any new `innerHTML` sinks and sanitize rich HTML.
 - [ ] **Service worker cache:** bump `CACHE` in `sw.js` after security/config changes.
 

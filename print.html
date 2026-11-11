@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://analytics.tiktok.com https://connect.facebook.net; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://analytics.tiktok.com https://www.facebook.com; frame-src https://www.facebook.com https://www.tiktok.com; form-action 'self'; base-uri 'self'; object-src 'none'">
+<meta name="robots" content="noindex">
+<title>Print</title>
+<link rel="stylesheet" href="assets/css/print.css">
+</head>
+<body>
+<!-- Printable invoice / shipping label. Opened by the dashboard, filled by
+     assets/js/ui/dashboard/print-document.js and printed. A same-origin page is required because a
+     window.open("") document has an opaque origin and cannot load a stylesheet under `style-src 'self'`. -->
+<main id="print-root"></main>
+<script type="module" src="assets/js/print.js"></script>
+</body>
+</html>

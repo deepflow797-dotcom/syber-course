@@ -1,0 +1,19 @@
+
+.DS_Store
+.env
+.env*
+!.env*.example
+!.env.example
+.env*.local
+.env.local
+node_modules/
+restore-store.zip
+.vercel
+*.zip
+
+# Phase 5 working files (never committed, never shipped in release zips)
+.kilocode/
+reports/evidence/
+reports/tools/
+playwright-report/
+test-results/

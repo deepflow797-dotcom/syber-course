@@ -1,0 +1,13 @@
+node_modules
+assets/vendor
+assets/js/data.js
+supabase
+clients
+docs
+playwright-report
+test-results
+*.min.js
+package-lock.json
+*.md
+*.html
+*.css

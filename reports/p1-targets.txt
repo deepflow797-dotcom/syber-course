@@ -1,0 +1,41 @@
+# 40 frozen functions (v1.6.0 baseline) — file<TAB>function<TAB>complexity
+assets/js/services/01-default-content.js	specsFor	40
+assets/js/services/01-default-content.js	products.map() callback inside buildState products	18
+assets/js/services/01-default-content.js	buildState	55
+assets/js/services/01-default-texts.js	install	22
+assets/js/services/04-staff-auth.js	remoteLogin	16
+assets/js/services/04-staff-auth.js	addManager	36
+assets/js/services/04-staff-auth.js	updateManager	26
+assets/js/services/04-staff-auth.js	changePassword	24
+assets/js/services/05-supabase-rest.js	remoteSessionValid	18
+assets/js/services/06-orders.js	submitOrder	20
+assets/js/services/06-orders.js	addOrder	16
+assets/js/services/08-catalog.js	loadCatalogNow	17
+assets/js/services/09-customers.js	customerRegister	20
+assets/js/services/09-customers.js	customerLogin	24
+assets/js/services/10-reviews.js	normalizeReview	22
+assets/js/services/10-reviews.js	submitReview	19
+assets/js/services/12-pages-settings.js	updateOwnerSettings	25
+assets/js/ui/dashboard/02-shell.js	renderShell	28
+assets/js/ui/dashboard/02-shell.js	renderRoute	21
+assets/js/ui/dashboard/04-modal-helpers.js	field	20
+assets/js/ui/dashboard/05-orders.js	printOrder	32
+assets/js/ui/dashboard/05-orders.js	viewOrderModal	21
+assets/js/ui/dashboard/07-products.js	saveProductEditor	20
+assets/js/ui/dashboard/16-team.js	viewProfile	37
+assets/js/ui/dashboard/16-team.js	managerEditor	27
+assets/js/ui/dashboard/16-team.js	saveManager	43
+assets/js/ui/dashboard/21-events-nav.js	handleField	17
+assets/js/ui/dashboard/21-events-nav.js	handleDirectToggle	23
+assets/js/ui/dashboard/22-events-forms.js	clickDispatcher (document click listener)	114
+assets/js/ui/dashboard/22b-events-settings.js	clickDispatcher (document click listener)	107
+assets/js/ui/dashboard/22b-events-settings.js	async IIFE inside settings click handler	21
+assets/js/ui/dashboard/23-events-misc.js	changeDispatcher (document change listener)	19
+assets/js/ui/storefront/04-header-footer.js	renderHeader	16
+assets/js/ui/storefront/11-product-page.js	pdpInfoHTML	30
+assets/js/ui/storefront/11-product-page.js	loadProductByHandle	42
+assets/js/ui/storefront/11-product-page.js	renderProduct	24
+assets/js/ui/storefront/12-checkout.js	renderCheckout	35
+assets/js/ui/storefront/12-checkout.js	placeOrderHandler (click listener on place-order)	53
+assets/js/ui/storefront/15-global-events.js	clickDispatcher (document click listener)	94
+assets/js/ui/storefront/15-global-events.js	applySeo	24

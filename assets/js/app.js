@@ -18,6 +18,8 @@ import { install as s11 } from "./ui/storefront/11-product-page.js";
 import { install as s12 } from "./ui/storefront/12-checkout.js";
 import { install as s13 } from "./ui/storefront/13-wishlist-page.js";
 import { install as s14 } from "./ui/storefront/14-static-pages.js";
+import { install as s15a } from "./ui/storefront/15a-click-handlers.js";
+import { install as s15b } from "./ui/storefront/15b-seo.js";
 import { install as s15 } from "./ui/storefront/15-global-events.js";
 import { install as s16 } from "./ui/storefront/16-boot.js";
 
@@ -44,6 +46,8 @@ const _initStorefront = () => {
   s12(ctx); // Checkout
   s13(ctx); // Wishlist page
   s14(ctx); // Static pages
+  s15a(ctx); // Click handler table
+  s15b(ctx); // SEO helpers (meta, canonical, JSON-LD)
   s15(ctx); // Global events
   s16(ctx); // Boot
 };

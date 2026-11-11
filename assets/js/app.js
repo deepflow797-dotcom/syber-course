@@ -24,7 +24,8 @@ import { install as s15 } from "./ui/storefront/15-global-events.js";
 import { install as s16 } from "./ui/storefront/16-boot.js";
 
 const _initStorefront = () => {
-  const ctx = {};
+  /** @type {StorefrontCtx} */
+  const ctx = /** @type {StorefrontCtx} */ ({});
   const R = window.RESTORE;
   if (!R) {
     console.error("Restore: state not loaded");

@@ -35,7 +35,8 @@ import { install as s23 } from "./ui/dashboard/23-events-misc.js";
 import { install as s24 } from "./ui/dashboard/24-boot.js";
 
 const _initDashboard = () => {
-  const ctx = {};
+  /** @type {DashboardCtx} */
+  const ctx = /** @type {DashboardCtx} */ ({});
   const R = window.RESTORE;
   if (!R) return;
   Object.assign(ctx, { R });

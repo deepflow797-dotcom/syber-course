@@ -13,7 +13,7 @@ Branch: `arena/58146d3d-syber-course`. Baseline: tag `v1.6.0-baseline` (commit `
 | P2 Typecheck on UI | ✅ done (0 errors, 0 `@ts-ignore`, 51 modules) | `p2-typecheck-final.txt`, `p2-check-final.txt` (109/109), `p2-e2e-final.txt` (6); commits `7eced68`…`89ab587`; tag `p5-phase-2-done` |
 | P5 CSP without unsafe-inline (style-src) | ✅ done (0 inline styles, 0 violations on 11 pages, pixel-identical) | `p5-check.txt` (116/116), `p5-e2e.txt` (6), `p5-csp-audit.txt`, `p5-pixel-diff.txt`, `p5-print-check.txt`; commits `8d814da`…`ddaa043`; tag `p5-phase-5-done` |
 | P3 Images + Lighthouse | ✅ done (CLS 0.765 → 0.017, icons −54…76 %) | `p3-check.txt` (117/117), `p3-e2e.txt` (6), `p3-metrics-after.txt`, `p3-bytes.txt`; commits `cac63e9`, `5b41dd5`; tag `p5-phase-3-done` |
-| P4 Backup/import | ⬜ todo | depends on P5 (done) |
+| P4 Backup/import | ✅ done (versioned JSON, diff-before-apply, 1-click undo, 11 unit + 2 e2e) | `p4-check.txt` (128/128), `p4-e2e.txt` (8), `p4-summary.txt`; commit `c945a9d`; tag `p5-phase-4-done` |
 | P6 Delivery docs + doctor | ⬜ todo | |
 | P7 Dependencies + security | ⬜ todo | |
 | P8 Delivery + final report | ⬜ todo | |
@@ -75,9 +75,31 @@ are ignored, but CSSOM is not (`el.style.setProperty`, `adoptedStyleSheets`, `in
 - Real transfer (gzip, cold cache): index 68 K, collection 54 K, product/checkout/account/blog 48 K — 43 K of that is JS.
   An earlier "431 K of JS" reading was uncompressed bytes; the tool now reads `encodedDataLength`.
 
+## P4 — backup / import
+
+Built in two layers on purpose:
+
+- `assets/js/domain/backup-format.js` — **pure** (no DOM, no storage, no network): envelope
+  `{format:"restore-backup", formatVersion:1, exportedAt, app, version, counts, data}`, validation that returns an error
+  **code** per failure (`not-a-backup`, `future-format`, `bad-products`, `empty-data`, `invalid-json` …), a
+  human diff, and a merge that replaces sections but never drops a setting the file predates. 11 unit tests cover a
+  lossless round trip, all 12 rejection paths, the diff and that merge rule.
+- `assets/js/services/15-backup.js` + `assets/js/ui/dashboard/24-backup.js` — storage, download, and the import modal
+  (counts + "3 → 5 products" style diff + *merge* vs *replace*) with a snapshot taken before applying, so **undo is one
+  button**. Real round trip in Playwright: export → change the store → import the file → counts identical → undo restores
+  the changed state (`e2e/05-backup.spec.mjs`, 2 tests).
+
+Notes (honest):
+- Tables mode: the file always contains products/collections (read from memory, which is hydrated from the tables), so a
+  backup restores onto a bare store; the apply path swaps local state and then calls `publish()` once, so a failed publish
+  rolls back instead of leaving half a state behind.
+- The undo snapshot lives in `localStorage` under `restore_state_v1_before_import`; it is per browser, not per account,
+  and it is not pruned — one key, overwritten by the next import.
+- The import is a plain `JSON.parse` of a user-supplied file: no code is evaluated, sections are type-checked before
+  merging, and unknown keys are ignored.
+
 ## Next item when resuming
 
-**P4 backup/import.** It was blocked on P5, which is done: the backup UI can now be written without inline styles.
-Plan: an export that serialises the published store state (settings, catalog, pages, texts, home sections) to a versioned
-JSON file, an import that validates the schema and shows a diff before applying, and a round-trip unit test. Reuse
-`ctx.R` accessors rather than reading `localStorage` directly, and keep the file importable without network.
+**P6 delivery docs + doctor.** `docs/` has ARCHITECTURE/UPDATING/VERIFICATION/BACKUP; add the client-facing handover
+(what to edit, how to publish, how to restore) and a `scripts/doctor.mjs` that checks a fresh clone: node version, config
+built, required files present, CSP header == meta CSP, icons 8-bit, service worker shell list matching disk.

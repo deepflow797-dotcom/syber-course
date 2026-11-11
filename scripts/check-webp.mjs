@@ -22,5 +22,24 @@ for (const [name, budget] of Object.entries(BUDGETS)) {
     fail = 1;
   }
 }
-if (fail) process.exit(1);
 console.log("icons ok: 8-bit and within budget");
+
+/* Vendored DOMPurify must be a current release: the banner version is the source of truth, and the runtime reads the
+   same string. A stale sanitizer is a security regression, not a nitpick — 3.2.x has published mXSS bypasses. */
+const purgeFile = path.join(process.argv[2] || process.cwd(), "assets/vendor/purify.min.js");
+if (fs.existsSync(purgeFile)) {
+  const banner = fs.readFileSync(purgeFile, "utf8").slice(0, 200);
+  const version = banner.match(/DOMPurify (\d+\.\d+\.\d+)/)?.[1];
+  const [major, minor] = String(version || "0.0.0")
+    .split(".")
+    .map(Number);
+  if (!version) ((fail = 1), console.error("VENDOR assets/vendor/purify.min.js: license banner lost its version"));
+  else if (major !== 3 || minor < 3) {
+    fail = 1;
+    console.error(
+      `VENDOR assets/vendor/purify.min.js: ${version} is older than the 3.3 floor (known sanitizer bypasses)`
+    );
+  } else console.log(`vendor ok: DOMPurify ${version}`);
+}
+
+if (fail) process.exit(1);

@@ -25,7 +25,7 @@
     "doctor": "node scripts/doctor.mjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.2.17",

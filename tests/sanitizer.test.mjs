@@ -35,3 +35,34 @@ test("safeText trims and truncates, normalizeDigits keeps only digits, clamp/num
   assert.equal(num("1e3"), 1000);
   assert.equal(num("x", 7), 7);
 });
+
+/* ---------- P7: the vendored sanitizer must stay current and must actually sanitize ---------- */
+
+test("the vendored DOMPurify is a pinned release and reports its own version", () => {
+  const banner = fs.readFileSync(ROOT + "assets/vendor/purify.min.js", "utf8").slice(0, 200);
+  const pinned = banner.match(/DOMPurify (\d+\.\d+\.\d+)/)?.[1];
+  assert.ok(pinned, "the license banner must carry the version — that is how an upgrade is verified");
+  const [major, minor, patch] = pinned.split(".").map(Number);
+  // 3.2.x carried known sanitizer bypasses (mXSS through template/SVG content); 3.3+ is the floor we accept.
+  assert.ok(major === 3 && (minor > 2 || (minor === 2 && patch >= 17)), `DOMPurify ${pinned} is too old`);
+  const dom = new JSDOM("", { runScripts: "outside-only" });
+  dom.window.eval(fs.readFileSync(ROOT + "assets/vendor/purify.min.js", "utf8"));
+  assert.equal(dom.window.DOMPurify.version, pinned, "runtime version matches the banner");
+});
+
+test("the current sanitizer still blocks mXSS-shaped payloads that 3.2.x let through", () => {
+  const dom = new JSDOM("", { runScripts: "outside-only" });
+  dom.window.eval(fs.readFileSync(ROOT + "assets/vendor/purify.min.js", "utf8"));
+  globalThis.DOMPurify = dom.window.DOMPurify;
+  const payloads = [
+    `<math><mtext><table><mglyph><style><img src=x onerror=alert(1)>`,
+    `<svg></p><style><a id="</style><img src=1 onerror=alert(1)>">`,
+    `<form><math><mtext></form><form><mglyph><style></math><img src onerror=alert(1)>`,
+    `<noscript><p title="</noscript><img src=x onerror=alert(1)>">`
+  ];
+  for (const payload of payloads) {
+    const out = sanitizeRichHTML(payload);
+    assert.ok(!/onerror|alert\(1\)/i.test(out.replace(/&[a-z]+;/g, "")), `payload survived: ${out}`);
+  }
+  delete globalThis.DOMPurify;
+});

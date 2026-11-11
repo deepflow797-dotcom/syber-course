@@ -17,4 +17,9 @@ This repository is a project template. Security fixes are applied to the current
 - **Privacy:** analytics pixels (Meta/TikTok/GA) load only after explicit consent (`restore_consent_v1`); SRI is not applicable to those vendor loaders (they rotate files) — consent gating is the control. All first-party scripts are same-origin under a CSP without `unsafe-inline`/`unsafe-eval`; styles are same-origin too — no `style` attributes, no `<style>` blocks, dynamic values only through CSSOM (`data-sv`).
 - **Headers (vercel.json):** HSTS (2 years, preload), COOP/CORP same-origin, nosniff, Referrer-Policy, X-Frame-Options, Permissions-Policy, CSP; `dashboard.html` is `no-store` + `noindex`.
 - **Known residual risks:** static client architecture; `img-src` still allows `https:` (merchant-supplied product images); sessions are memory/sessionStorage-limited (no HttpOnly backend cookies); distributed rate limiting requires deployed RPC/table; third-party analytics pixels increase surface; entry files were modularized in 1.3.0 but modules still share a `ctx` object (see docs/ARCHITECTURE.md).
+- **Dependency policy (1.7.0):** `engines.node` is `>=20` (matching CI), `npm ci` is the only supported install, and
+  `npm audit` is run in CI. The one vendored library is DOMPurify: it is pinned by its license banner, checked against a
+  **3.3 floor** by `scripts/check-webp.mjs` (part of `npm run lint`) because 3.2.x has published mXSS bypasses, and
+  regression-tested against four mXSS-shaped payloads in `tests/sanitizer.test.mjs` (jsdom) and in real Chromium.
+  Upgrading it is a deliberate act: drop the upstream `dist/purify.min.js` in place and the three checks re-verify it.
 - **Secrets:** never commit `service_role`, `.env.local`, `.vercel/project.json`, or JWTs. Rotate immediately if exposed and purge git history.

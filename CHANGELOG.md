@@ -173,7 +173,7 @@ Apply `0004_catalog_atomic.sql` after 0003. No client config change.
 - Added server-side order validation path (`create-order` Edge Function + atomic `restore_create_order` RPC) with stock decrement and fail-closed client behavior in remote mode.
 - `create-order` is fail-closed in production when Turnstile is not configured; added shared rate-limit RPC/table (`restore_rate_limits`, `restore_rate_hit`) and origin restrictions.
 - Staff session metadata moved to `sessionStorage`; access/refresh tokens are memory-only (never persisted). Added 2-minute pre-expiry refresh and 30-minute dashboard idle logout.
-- Tightened CSP: `script-src` has no `unsafe-eval`/`unsafe-inline`; added local vendored DOMPurify 3.2.6 (MPL-2.0/Apache-2.0) wrapper for `sanitizeRichHTML`.
+- Tightened CSP: `script-src` has no `unsafe-eval`/`unsafe-inline`; added local vendored DOMPurify 3.4.17 (MPL-2.0/Apache-2.0) wrapper for `sanitizeRichHTML`.
 - Removed leaked local deployment/env artifacts (`.env.local`, `.vercel/project.json`), strengthened `.gitignore`, and added `scripts/check-secrets.sh` + `.githooks/pre-commit`. `.zip` files ignored.
 
 ### Architecture / Data

@@ -35,6 +35,7 @@ const SHELL = [
   "assets/js/services/02-state-hydration.js",
   "assets/js/services/03-shared-utils.js",
   "assets/js/services/04-staff-auth.js",
+  "assets/js/services/04a-staff-rows.js",
   "assets/js/services/05-supabase-rest.js",
   "assets/js/services/06-orders.js",
   "assets/js/services/07-publish.js",

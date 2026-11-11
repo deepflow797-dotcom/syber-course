@@ -40,25 +40,55 @@ export function install(ctx) {
     ctx.editBuffer = null;
   }
 
+  function hintHTML(hint) {
+    if (!hint) return "";
+    return `<p class="form-note">${ctx.esc(hint)}</p>`;
+  }
+
+  const disabledAttr = (disabled) => (disabled ? "disabled" : "");
+
+  function optionHTML(option, actual) {
+    const optionValue = typeof option === "object" ? option.value : option;
+    const optionLabel = typeof option === "object" ? option.label : option;
+    const selected = String(optionValue) === String(actual) ? "selected" : "";
+    return `<option value="${ctx.esc(optionValue)}" ${selected}>${ctx.esc(optionLabel)}</option>`;
+  }
+
+  function selectField(label, path, actual, { hint, options, disabled }) {
+    const body = options.map((option) => optionHTML(option, actual)).join("");
+    return `<div class="field"><label>${ctx.esc(label)}</label><select data-path="${ctx.esc(path)}" ${disabledAttr(disabled)}>${body}</select>${hintHTML(hint)}</div>`;
+  }
+
+  function textareaField(label, path, actual, { hint, placeholder, rows, disabled }) {
+    return `<div class="field"><label>${ctx.esc(label)}</label><textarea data-path="${ctx.esc(path)}" rows="${rows}" placeholder="${ctx.esc(placeholder)}" ${disabledAttr(disabled)}>${ctx.esc(actual ?? "")}</textarea>${hintHTML(hint)}</div>`;
+  }
+
+  function inputField(label, path, actual, { type, hint, placeholder, disabled }) {
+    return `<div class="field"><label>${ctx.esc(label)}</label><input type="${type}" data-path="${ctx.esc(path)}" value="${ctx.esc(actual ?? "")}" placeholder="${ctx.esc(placeholder)}" ${disabledAttr(disabled)}>${hintHTML(hint)}</div>`;
+  }
+
+  /** Current value of a field, normalised for `datetime-local` inputs. */
+  function fieldValue(path, value, type) {
+    const actual = value !== undefined ? value : ctx.getPath(ctx.model, path);
+    if (type !== "datetime-local") return actual;
+    return ctx.isoLocal(actual);
+  }
+
+  /** Extra options for the three field renderers. */
+  function fieldExtras(type, disabled, hint, placeholder, rows) {
+    return { type, disabled, hint, placeholder, rows };
+  }
+
   function field(
     label,
     path,
     { type = "text", value, placeholder = "", hint = "", rows = 3, options = null, disabled = false } = {}
   ) {
-    let actual = value !== undefined ? value : ctx.getPath(ctx.model, path);
-    if (type === "datetime-local") actual = ctx.isoLocal(actual);
-    if (options) {
-      return `<div class="field"><label>${ctx.esc(label)}</label><select data-path="${ctx.esc(path)}" ${disabled ? "disabled" : ""}>${options
-        .map((option) => {
-          const optionValue = typeof option === "object" ? option.value : option;
-          const optionLabel = typeof option === "object" ? option.label : option;
-          return `<option value="${ctx.esc(optionValue)}" ${String(optionValue) === String(actual) ? "selected" : ""}>${ctx.esc(optionLabel)}</option>`;
-        })
-        .join("")}</select>${hint ? `<p class="form-note">${ctx.esc(hint)}</p>` : ""}</div>`;
-    }
-    if (type === "textarea")
-      return `<div class="field"><label>${ctx.esc(label)}</label><textarea data-path="${ctx.esc(path)}" rows="${rows}" placeholder="${ctx.esc(placeholder)}" ${disabled ? "disabled" : ""}>${ctx.esc(actual ?? "")}</textarea>${hint ? `<p class="form-note">${ctx.esc(hint)}</p>` : ""}</div>`;
-    return `<div class="field"><label>${ctx.esc(label)}</label><input type="${type}" data-path="${ctx.esc(path)}" value="${ctx.esc(actual ?? "")}" placeholder="${ctx.esc(placeholder)}" ${disabled ? "disabled" : ""}>${hint ? `<p class="form-note">${ctx.esc(hint)}</p>` : ""}</div>`;
+    const actual = fieldValue(path, value, type);
+    const extras = fieldExtras(type, disabled, hint, placeholder, rows);
+    if (options) return selectField(label, path, actual, { ...extras, options });
+    if (type === "textarea") return textareaField(label, path, actual, extras);
+    return inputField(label, path, actual, extras);
   }
 
   function biField(label, path, { type = "text", rows = 3 } = {}) {
@@ -71,15 +101,43 @@ export function install(ctx) {
 
   function editInput(label, path, { type = "text", value = "", placeholder = "", rows = 3, help = "" } = {}) {
     const suffix = `data-edit-path="${ctx.esc(path)}"`;
-    if (type === "textarea")
-      return `<div class="field"><label>${ctx.esc(label)}</label><textarea ${suffix} rows="${rows}" placeholder="${ctx.esc(placeholder)}">${ctx.esc(value ?? "")}</textarea>${help ? `<p class="form-note">${ctx.esc(help)}</p>` : ""}</div>`;
-    return `<div class="field"><label>${ctx.esc(label)}</label><input type="${type}" ${suffix} value="${ctx.esc(value ?? "")}" placeholder="${ctx.esc(placeholder)}">${help ? `<p class="form-note">${ctx.esc(help)}</p>` : ""}</div>`;
+    const body =
+      type === "textarea"
+        ? `<textarea ${suffix} rows="${rows}" placeholder="${ctx.esc(placeholder)}">${ctx.esc(value ?? "")}</textarea>`
+        : `<input type="${type}" ${suffix} value="${ctx.esc(value ?? "")}" placeholder="${ctx.esc(placeholder)}">`;
+    return `<div class="field"><label>${ctx.esc(label)}</label>${body}${hintHTML(help)}</div>`;
   }
+
+  function biGridHTML(label, arField, frField) {
+    return `<div class="field"><label>${ctx.esc(label)}</label><div class="bi-grid">${arField}${frField}</div></div>`;
+  }
+
+  const editArAttr = (path, rows) => `data-edit-path="${ctx.esc(path)}.ar" rows="${rows}" dir="rtl"`;
+  const editFrAttr = (path, rows) => `data-edit-path="${ctx.esc(path)}.fr" rows="${rows}" dir="ltr"`;
+  const editArInput = (path) => `data-edit-path="${ctx.esc(path)}.ar"`;
+  const editFrInput = (path) => `data-edit-path="${ctx.esc(path)}.fr"`;
+
+  function editBiTextarea(label, path, value, rows) {
+    return biGridHTML(
+      label,
+      `<textarea ${editArAttr(path, rows)}>${ctx.esc(value?.ar ?? "")}</textarea>`,
+      `<textarea ${editFrAttr(path, rows)}>${ctx.esc(value?.fr ?? "")}</textarea>`
+    );
+  }
+
+  function editBiInputs(label, path, value) {
+    return biGridHTML(
+      label,
+      `<input ${editArInput(path)} value="${ctx.esc(value?.ar ?? "")}" dir="rtl">`,
+      `<input ${editFrInput(path)} value="${ctx.esc(value?.fr ?? "")}" dir="ltr">`
+    );
+  }
+
   function editBi(label, path, value = {}, { type = "text", rows = 3 } = {}) {
-    if (type === "textarea")
-      return `<div class="field"><label>${ctx.esc(label)}</label><div class="bi-grid"><textarea data-edit-path="${ctx.esc(path)}.ar" rows="${rows}" dir="rtl">${ctx.esc(value?.ar ?? "")}</textarea><textarea data-edit-path="${ctx.esc(path)}.fr" rows="${rows}" dir="ltr">${ctx.esc(value?.fr ?? "")}</textarea></div></div>`;
-    return `<div class="field"><label>${ctx.esc(label)}</label><div class="bi-grid"><input data-edit-path="${ctx.esc(path)}.ar" value="${ctx.esc(value?.ar ?? "")}" dir="rtl"><input data-edit-path="${ctx.esc(path)}.fr" value="${ctx.esc(value?.fr ?? "")}" dir="ltr"></div></div>`;
+    if (type === "textarea") return editBiTextarea(label, path, value, rows);
+    return editBiInputs(label, path, value);
   }
+
   function editToggle(label, path, checked) {
     return `<div class="check-row"><label class="toggle"><input type="checkbox" data-edit-path="${ctx.esc(path)}" ${checked ? "checked" : ""}><span></span></label><span>${ctx.esc(label)}</span></div>`;
   }

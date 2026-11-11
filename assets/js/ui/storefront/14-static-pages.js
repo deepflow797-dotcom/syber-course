@@ -83,7 +83,7 @@ export function install(ctx) {
         <span class="eyebrow">${ctx.esc(ctx.R.formatDate(post.date))}</span>
         <h1>${ctx.esc(ctx.L(post.title))}</h1>
         <p class="blog-excerpt">${ctx.esc(ctx.L(post.excerpt))}</p>
-        <img class="blog-hero" src="${ctx.esc(post.image || "assets/img/category-iphone.svg")}" alt="${ctx.esc(ctx.L(post.title))}">
+        <img class="blog-hero" src="${ctx.esc(post.image || "assets/img/category-iphone.svg")}" width="1200" height="600" decoding="async" alt="${ctx.esc(ctx.L(post.title))}">
         ${String(ctx.L(post.body))
           .split("\n")
           .filter(Boolean)
@@ -276,7 +276,7 @@ export function install(ctx) {
             <button class="btn btn-outline btn-sm" type="button" id="account-logout">${ctx.ICON.logout} ${ctx.esc(ctx.t("logout"))}</button>
           </div>
           <h3 class="account-subtitle">${ctx.esc(ctx.t("myWishlist"))} <span class="muted">(${(cust.wishlist || []).length})</span></h3>
-          ${wishlist.length ? `<div class="account-wishlist">${wishlist.map((product) => `<a class="account-wish-item" href="product.html?handle=${encodeURIComponent(product.handle)}"><img src="${ctx.esc(product.image)}" alt="${ctx.esc(product.title)}"><span>${ctx.esc(product.title)}</span></a>`).join("")}</div>` : `<p class="muted">${ctx.esc(ctx.t("emptyWish"))}</p>`}
+          ${wishlist.length ? `<div class="account-wishlist">${wishlist.map((product) => `<a class="account-wish-item" href="product.html?handle=${encodeURIComponent(product.handle)}"><img src="${ctx.esc(product.image)}" alt="${ctx.esc(product.title)}" width="48" height="48" loading="lazy" decoding="async"><span>${ctx.esc(product.title)}</span></a>`).join("")}</div>` : `<p class="muted">${ctx.esc(ctx.t("emptyWish"))}</p>`}
           <a class="text-link" href="wishlist.html">${ctx.esc(ctx.t("viewWishlist"))} ${ctx.ICON.arrowRight}</a>
           <h3 class="account-subtitle">${ctx.esc(ctx.t("myReviews"))}</h3>
           ${myReviews.length ? `<div class="account-reviews">${myReviews.map((review) => `<div class="account-review"><div class="grow"><strong>${ctx.esc(ctx.L(review.title))}</strong><small>${ctx.esc(review.productHandle)} · ${ctx.esc(ctx.R.formatDate(review.createdAt))}</small></div><span class="badge-soft ${review.status === "approved" ? "green" : review.status === "rejected" ? "red" : "orange"}">${ctx.esc(statusLabel[review.status] || review.status)}</span></div>`).join("")}</div>` : `<p class="muted">${ctx.esc(ctx.t("noReviews"))}</p>`}

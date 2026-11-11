@@ -31,7 +31,7 @@ export function install(ctx) {
     return `
       <article class="product-card" data-handle="${ctx.esc(p.handle)}">
         <a class="card-media" href="product.html?handle=${encodeURIComponent(p.handle)}" aria-label="${ctx.esc(p.title)}">
-          ${badge}<img src="${initialImage}" alt="${ctx.esc(p.title)}" loading="lazy" data-card-main>
+          ${badge}<img src="${initialImage}" alt="${ctx.esc(p.title)}" width="300" height="300" loading="lazy" decoding="async" data-card-main>
           <span class="card-tint" data-card-tint aria-hidden="true"></span>
           ${Number(p.stock) <= 0 ? `<span class="sold-out-badge">${ctx.esc(ctx.t("soldOut"))}</span>` : ""}
         </a>

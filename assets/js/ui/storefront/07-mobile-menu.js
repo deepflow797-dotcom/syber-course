@@ -84,7 +84,7 @@ export function install(ctx) {
           .map(
             (p) => `
       <a class="search-result" href="product.html?handle=${encodeURIComponent(p.handle)}">
-        <img src="${p.image}" alt="${ctx.esc(p.title)}">
+        <img src="${p.image}" alt="${ctx.esc(p.title)}" width="64" height="64" loading="lazy" decoding="async">
         <div><div class="t">${ctx.esc(p.title)}</div><div class="p">${ctx.money(p.price)}</div></div>
       </a>`
           )

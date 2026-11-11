@@ -45,7 +45,7 @@ export function install(ctx) {
             </div>
             <div class="hero-visual">
               <div class="hero-glow"></div>
-              <img src="${ctx.esc(image)}" alt="${ctx.esc(ctx.L(slide.title))}" loading="${i === 0 ? "eager" : "lazy"}">
+              <img src="${ctx.esc(image)}" alt="${ctx.esc(ctx.L(slide.title))}" width="514" height="300" loading="${i === 0 ? "eager" : "lazy"}" decoding="async">
             </div>
           </div>
         </div>`;
@@ -90,7 +90,7 @@ export function install(ctx) {
               .map(
                 (c) => `
               <a class="cat-card" href="collection.html?handle=${encodeURIComponent(c.handle)}">
-                <img src="${c.image}" alt="${ctx.esc(ctx.L(c.label))}" loading="lazy"><span>${ctx.esc(ctx.L(c.label))}</span>
+                <img src="${c.image}" alt="${ctx.esc(ctx.L(c.label))}" width="150" height="150" loading="lazy" decoding="async"><span>${ctx.esc(ctx.L(c.label))}</span>
               </a>`
               )
               .join("")}
@@ -143,7 +143,7 @@ export function install(ctx) {
         </div></div></section>`;
     }
     const promo = section.promo
-      ? `<a class="promo" href="collection.html?handle=${encodeURIComponent(section.collection || "all")}"><img src="${ctx.esc(section.promo)}" alt="${ctx.esc(ctx.L(section.title))}" loading="lazy"></a>`
+      ? `<a class="promo" href="collection.html?handle=${encodeURIComponent(section.collection || "all")}"><img src="${ctx.esc(section.promo)}" alt="${ctx.esc(ctx.L(section.title))}" width="200" height="150" loading="lazy" decoding="async"></a>`
       : "";
     const panel = `<div class="carousel-wrap"><div class="carousel-panel"><div class="track">${cards}</div></div>
       <button class="carousel-arrow next" type="button" data-scroll="next" aria-label="${ctx.esc(ctx.t("seeAll"))}">${ctx.ICON.chevronRight}</button></div>`;
@@ -219,7 +219,7 @@ export function install(ctx) {
         <h2 id="service-heading">${ctx.esc(ctx.L(ctx.SET.serviceTitle))}</h2>
         <div class="service-grid">
           <div>${items.slice(0, 2).map(feature).join("")}</div>
-          <img class="service-img" src="assets/img/service-phones.svg" alt="${ctx.esc(ctx.L(ctx.SET.storeName))}" loading="lazy">
+          <img class="service-img" src="assets/img/service-phones.svg" alt="${ctx.esc(ctx.L(ctx.SET.storeName))}" width="150" height="150" loading="lazy" decoding="async">
           <div>${items.slice(2, 4).map(feature).join("")}</div>
         </div>
       </section>
@@ -253,7 +253,7 @@ export function install(ctx) {
               (
                 src
               ) => `<a class="video-card" href="#" data-video aria-label="${ctx.R.lang === "ar" ? "قصة عميل" : "Témoignage client"}">
-            <img src="${src}" alt="" loading="lazy"><span class="play" data-icon="play" aria-hidden="true"></span>
+            <img src="${src}" alt="" width="300" height="533" loading="lazy" decoding="async"><span class="play" data-icon="play" aria-hidden="true"></span>
           </a>`
             )
             .join("")}

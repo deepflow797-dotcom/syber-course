@@ -443,7 +443,11 @@ svg { display: block; }
   height: 210px; margin-bottom: 12px;
 }
 .carousel-panel .card-media { height: 252px; }
-.card-media img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform .3s; }
+.card-media img {
+  /* width/height attributes keep the box reserved; the rule caps it exactly as before */
+  width: 196px; height: 196px; min-width: 0; min-height: 0;
+  max-width: 100%; max-height: 100%; object-fit: contain; transition: transform .3s;
+}
 .product-card:hover .card-media img { transform: scale(1.04); }
 
 .badge {
@@ -895,13 +899,15 @@ svg { display: block; }
 /* --------------------------------------------------------------------------
    Collection page
    -------------------------------------------------------------------------- */
-.collection-head { padding: 26px 0 14px; }
+.collection-head { padding: 26px 0 14px; min-height: 102px; }
 .breadcrumb { font-size: 12px; color: #8a8a8a; padding: 16px 0 4px; display: flex; gap: 6px; flex-wrap: wrap; }
 .breadcrumb a:hover { color: var(--purple); }
 .collection-head h1 { font-size: 26px; font-weight: 700; line-height: 1.25; margin-top: 6px; }
 .collection-head .count { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .collection-toolbar {
   display: flex; align-items: center; justify-content: space-between;
+  /* chips + sort are injected after boot; the reserved height stops them pushing the grid down */
+  min-height: 110px;
   gap: 14px; padding: 16px 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -928,11 +934,16 @@ svg { display: block; }
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 20px;
+  /* Both the grid and the site header/footer are filled by script at boot. Reserving their heights (measured
+     at 3 widths, where the header is 165/157/136 and one card row is 412/392/344) keeps the page from
+     jumping when they paint: this was CLS 0.765 on collection.html, 0.103 on account.html. */
+  min-height: 412px;
+  align-content: start;
 }
 .grid .product-card { width: auto; flex: initial; height: 100%; }
 .grid .card-media { height: 220px; }
 .grid .card-title { min-height: 38px; }
-.load-more-wrap { display: flex; justify-content: center; padding: 34px 0 50px; }
+.load-more-wrap { display: flex; justify-content: center; padding: 34px 0 50px; min-height: 118px; }
 .empty-state { text-align: center; padding: 80px 20px; color: var(--muted); }
 .empty-state h2 { font-size: 20px; color: var(--ink); margin-bottom: 8px; }
 .empty-state .btn { margin-top: 18px; }
@@ -1230,4 +1241,40 @@ svg { display: block; }
   .tp-star { width: 18px; height: 18px; }
   .review-card { flex-basis: 240px; padding: 52px 18px 18px; }
   .review-avatar { width: 66px; height: 66px; font-size: 26px; left: 18px; }
+}
+
+/* --------------------------------------------------------------------------
+   Reserved space for the script-rendered shell (layout stability).
+   `#site-header` / `#site-footer` are empty in the HTML and filled by 04-header-footer.js, so without a
+   reserved height every page shifts when they paint. Measured: 164px (>=1024), 156px (768-1023),
+   135px (<768); footer 592px (>=1024), 754px (768-1023), 1199px (<768).
+   Never reserve *more* than the rendered height: an overshoot pushes the rest of the page down by the
+   difference, which shows up as a 1px shift on every page.
+   -------------------------------------------------------------------------- */
+#site-header { min-height: 164px; }
+#site-footer { min-height: 592px; }
+/* the rendered header sits 18px lower than the placeholder slot (breadcrumb padding above it) */
+#site-header { padding-top: 0; }
+/* only while the breadcrumb is still empty at boot: once filled, its own height rules apply */
+main > .container > .breadcrumb:empty { min-height: 38px; }
+
+@media (max-width: 1023px) {
+  #site-header { min-height: 156px; }
+  #site-footer { min-height: 754px; }
+}
+
+@media (max-width: 1023px) {
+  .collection-toolbar { min-height: 152px; }
+}
+
+@media (max-width: 767px) {
+  #site-header { min-height: 135px; }
+  .collection-head { min-height: 96px; }
+  .collection-toolbar { min-height: 242px; }
+  #site-footer { min-height: 1199px; }
+  .grid { min-height: 344px; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .grid { min-height: 392px; }
 }

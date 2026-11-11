@@ -80,7 +80,7 @@ html[data-theme="dark"] .cat-arrow { background: var(--surface); border-color: v
 }
 
 .header-top { grid-template-columns: 190px minmax(0, 1fr) auto; gap: 22px; }
-.logo img { width: 132px; }
+.logo img { width: 132px; height: auto; }
 .search { background: var(--surface-2); border: 1px solid transparent; transition: border-color .2s, background .2s; }
 .search:focus-within { border-color: var(--orange); background: var(--surface); }
 .search input { color: var(--text); }

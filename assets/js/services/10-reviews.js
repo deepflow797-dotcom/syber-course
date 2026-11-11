@@ -18,25 +18,49 @@ export function install(ctx) {
     moderateReview,
     deleteCustomerReview
   });
-  function normalizeReview(review = {}) {
-    const status = ["pending", "approved", "rejected"].includes(review.status)
-      ? review.status
-      : review.approved === false
-        ? "rejected"
-        : "approved";
+  const REVIEW_STATUSES = ["pending", "approved", "rejected"];
+
+  /** Legacy rows used `approved` instead of `status`. */
+  function reviewStatus(review) {
+    if (REVIEW_STATUSES.includes(review.status)) return review.status;
+    return review.approved === false ? "rejected" : "approved";
+  }
+
+  /** Text field with a fallback chain of legacy column names. */
+  const firstText = (...values) => values.find((value) => value != null && value !== "") ?? "";
+
+  function reviewAuthor(review) {
     return {
-      id: review.id || ctx.uid("rev"),
-      productHandle: review.productHandle || review.product_handle || review.handle || "",
-      customerId: review.customerId || review.customer_id || "",
-      customerName: review.customerName || review.customer_name || review.name || "Client",
-      email: ctx.normalizeEmail(review.email || ""),
+      customerId: firstText(review.customerId, review.customer_id),
+      customerName: firstText(review.customerName, review.customer_name, review.name, "Client"),
+      email: ctx.normalizeEmail(review.email || "")
+    };
+  }
+
+  function reviewBody(review) {
+    return {
       rating: Math.max(1, Math.min(5, Number(review.rating) || 5)),
       title: review.title ?? "",
-      body: review.body ?? review.comment ?? "",
-      status,
+      body: review.body ?? review.comment ?? ""
+    };
+  }
+
+  function reviewMeta(review) {
+    return {
+      status: reviewStatus(review),
       verified: review.verified !== false,
-      createdAt: review.createdAt || review.created_at || ctx.nowISO(),
-      updatedAt: review.updatedAt || review.updated_at || ""
+      createdAt: firstText(review.createdAt, review.created_at, ctx.nowISO()),
+      updatedAt: firstText(review.updatedAt, review.updated_at)
+    };
+  }
+
+  function normalizeReview(review = {}) {
+    return {
+      id: review.id || ctx.uid("rev"),
+      productHandle: firstText(review.productHandle, review.product_handle, review.handle),
+      ...reviewAuthor(review),
+      ...reviewBody(review),
+      ...reviewMeta(review)
     };
   }
   function loadLocalReviews() {
@@ -124,69 +148,80 @@ export function install(ctx) {
         (ctx.currentCustomer.email && review.email === ctx.normalizeEmail(ctx.currentCustomer.email))
     );
   }
-  async function submitReview(data = {}) {
-    if (!ctx.currentCustomer) throw new Error("loginRequired");
-    const productHandle = String(data.productHandle || "").trim();
-    const rating = Number(data.rating);
-    const title = String(data.title || "")
+  const trimmed = (value, max) =>
+    String(value || "")
       .trim()
-      .slice(0, 120);
-    const body = String(data.body || "")
-      .trim()
-      .slice(0, 2000);
-    if (!productHandle || !ctx.state.products.some((product) => product.handle === productHandle))
-      throw new Error("المنتج غير موجود");
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw new Error("التقييم يجب أن يكون بين 1 و 5");
-    if (title.length < 2) throw new Error("أضف عنوانًا للتقييم");
-    if (body.length < 4) throw new Error("أضف تعليقًا للتقييم");
-    if (
-      ctx.reviewCache.some(
-        (review) =>
-          review.productHandle === productHandle &&
-          review.status === "pending" &&
-          review.customerId === (ctx.customerAuth?.user?.id || ctx.currentCustomer.id)
-      )
-    ) {
-      throw new Error("لديك تقييم قيد المراجعة لهذا المنتج");
-    }
+      .slice(0, max);
 
-    if (ctx.REMOTE) {
-      if (!ctx.customerAuth?.accessToken) throw new Error("سجّل الدخول بحساب العميل لتقييم المنتج");
-      const rows = await ctx.supaCustomer(`/rest/v1/${ctx.CFG.reviewsTable}?select=*`, {
-        method: "POST",
-        headers: { Prefer: "return=representation" },
-        body: JSON.stringify({
-          product_handle: productHandle,
-          customer_id: ctx.customerAuth.user.id,
-          customer_name: ctx.currentCustomer.name,
-          rating,
-          title,
-          body,
-          status: "pending"
-        })
-      });
-      const row = Array.isArray(rows) ? rows[0] : rows;
-      if (!row) throw new Error("تعذر حفظ التقييم");
-      const normalized = normalizeReview({
-        ...row,
-        productHandle: row.product_handle,
-        customerId: row.customer_id,
-        customerName: row.customer_name,
-        createdAt: row.created_at
-      });
-      await refreshReviews();
-      return normalized;
-    }
+  /** Throws the first validation error of a review draft. */
+  function assertReviewDraft(draft) {
+    const knownProduct = ctx.state.products.some((product) => product.handle === draft.productHandle);
+    if (!draft.productHandle || !knownProduct) throw new Error("المنتج غير موجود");
+    if (!Number.isInteger(draft.rating) || draft.rating < 1 || draft.rating > 5)
+      throw new Error("التقييم يجب أن يكون بين 1 و 5");
+    if (draft.title.length < 2) throw new Error("أضف عنوانًا للتقييم");
+    if (draft.body.length < 4) throw new Error("أضف تعليقًا للتقييم");
+  }
 
+  /** Sanitised review fields, validated against the catalog and the rules. */
+  function reviewDraft(data) {
+    const draft = {
+      productHandle: trimmed(data.productHandle, 120),
+      rating: Number(data.rating),
+      title: trimmed(data.title, 120),
+      body: trimmed(data.body, 2000)
+    };
+    assertReviewDraft(draft);
+    return draft;
+  }
+
+  /** One pending review per product per customer. */
+  function assertNoPendingReview(productHandle) {
+    const customerId = ctx.customerAuth?.user?.id || ctx.currentCustomer.id;
+    const pending = ctx.reviewCache.some(
+      (review) =>
+        review.productHandle === productHandle && review.status === "pending" && review.customerId === customerId
+    );
+    if (pending) throw new Error("لديك تقييم قيد المراجعة لهذا المنتج");
+  }
+
+  /** Remote insert through the customer-scoped REST helper. */
+  async function submitRemoteReview(draft) {
+    if (!ctx.customerAuth?.accessToken) throw new Error("سجّل الدخول بحساب العميل لتقييم المنتج");
+    const rows = await ctx.supaCustomer(`/rest/v1/${ctx.CFG.reviewsTable}?select=*`, {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({
+        product_handle: draft.productHandle,
+        customer_id: ctx.customerAuth.user.id,
+        customer_name: ctx.currentCustomer.name,
+        rating: draft.rating,
+        title: draft.title,
+        body: draft.body,
+        status: "pending"
+      })
+    });
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    if (!row) throw new Error("تعذر حفظ التقييم");
+    const normalized = normalizeReview({
+      ...row,
+      productHandle: row.product_handle,
+      customerId: row.customer_id,
+      customerName: row.customer_name,
+      createdAt: row.created_at
+    });
+    await refreshReviews();
+    return normalized;
+  }
+
+  /** Local (draft) insert, queued for moderation. */
+  function submitLocalReview(draft) {
     const review = normalizeReview({
       id: ctx.uid("rev"),
-      productHandle,
+      ...draft,
       customerId: ctx.currentCustomer.id,
       customerName: ctx.currentCustomer.name,
       email: ctx.currentCustomer.email,
-      rating,
-      title,
-      body,
       status: "pending",
       verified: true,
       createdAt: ctx.nowISO()
@@ -196,6 +231,15 @@ export function install(ctx) {
     persistLocalReviews(rows);
     return review;
   }
+
+  async function submitReview(data = {}) {
+    if (!ctx.currentCustomer) throw new Error("loginRequired");
+    const draft = reviewDraft(data);
+    assertNoPendingReview(draft.productHandle);
+    if (ctx.REMOTE) return submitRemoteReview(draft);
+    return submitLocalReview(draft);
+  }
+
   async function moderateReview(reviewId, action) {
     const id = String(reviewId || "");
     if (!id) throw new Error("تقييم غير معروف");

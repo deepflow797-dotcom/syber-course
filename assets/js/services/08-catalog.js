@@ -62,37 +62,48 @@ export function install(ctx) {
     });
     return ctx.catalogLoading;
   }
+  /** Reads the four catalog endpoints in one round of requests. */
+  async function readCatalogTables(staff) {
+    const [prods, cols, cps] = await Promise.all([
+      catalogRepo.listProducts({ staff }),
+      catalogRepo.listCollections({ staff }),
+      catalogRepo.listCoupons({ staff }).catch(() => [])
+    ]);
+    const meta = await catalogRepo.meta().catch(() => null);
+    return { prods, cols, cps, meta };
+  }
+
+  /** Overlays the table rows on the state; returns true when anything changed. */
+  function applyCatalogTables({ prods, cols, cps, meta }, silent) {
+    const products = prods.map(({ row, variants, collectionHandles }) =>
+      rowToProduct(row, variants, collectionHandles)
+    );
+    const collections = cols.length ? cols.map(rowToCollection) : null;
+    const coupons = cps.map(rowToCoupon);
+    const before = catalogSignature(ctx.state.products, ctx.state.collections, ctx.state.settings?.coupons);
+    catalogOverlay(products, collections, coupons);
+    ctx.state = ctx.hydrate(ctx.state); // normalise exactly like a fresh page load
+    ctx.writeJSON(ctx.LS_STATE, ctx.state);
+    const after = catalogSignature(ctx.state.products, ctx.state.collections, ctx.state.settings?.coupons);
+    catalogInfo.source = "tables";
+    catalogInfo.version = Number(meta?.version || 0);
+    catalogInfo.loadedAt = Date.now();
+    catalogInfo.error = "";
+    if (before !== after && !silent)
+      window.dispatchEvent(new CustomEvent("restore:changed", { detail: { source: "catalog" } }));
+    return true;
+  }
+
   async function loadCatalogNow({ staff = false, silent = true } = {}) {
     if (!catalogRepo) return false;
     try {
-      const [prods, cols, cps] = await Promise.all([
-        catalogRepo.listProducts({ staff }),
-        catalogRepo.listCollections({ staff }),
-        catalogRepo.listCoupons({ staff }).catch(() => [])
-      ]);
-      const meta = await catalogRepo.meta().catch(() => null);
-      if (!prods.length && !cols.length) {
+      const tables = await readCatalogTables(staff);
+      if (!tables.prods.length && !tables.cols.length) {
         catalogInfo.source = "state"; // tables empty → migration not applied / not imported yet
         catalogInfo.loadedAt = Date.now();
         return false;
       }
-      const products = prods.map(({ row, variants, collectionHandles }) =>
-        rowToProduct(row, variants, collectionHandles)
-      );
-      const collections = cols.length ? cols.map(rowToCollection) : null;
-      const coupons = cps.map(rowToCoupon);
-      const before = catalogSignature(ctx.state.products, ctx.state.collections, ctx.state.settings?.coupons);
-      catalogOverlay(products, collections, coupons);
-      ctx.state = ctx.hydrate(ctx.state); // normalise exactly like a fresh page load
-      ctx.writeJSON(ctx.LS_STATE, ctx.state);
-      const after = catalogSignature(ctx.state.products, ctx.state.collections, ctx.state.settings?.coupons);
-      catalogInfo.source = "tables";
-      catalogInfo.version = Number(meta?.version || 0);
-      catalogInfo.loadedAt = Date.now();
-      catalogInfo.error = "";
-      if (before !== after && !silent)
-        window.dispatchEvent(new CustomEvent("restore:changed", { detail: { source: "catalog" } }));
-      return true;
+      return applyCatalogTables(tables, silent);
     } catch (error) {
       catalogInfo.error = String(error?.message || error);
       console.warn("Restore: catalog load failed", error);

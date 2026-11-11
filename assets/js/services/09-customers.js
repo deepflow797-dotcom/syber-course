@@ -120,27 +120,30 @@ export function install(ctx) {
     else localStorage.removeItem(ctx.LS_CUSTOMER_SESSION);
   }
 
+  /** Creates the customers row of a freshly signed-up auth user. */
+  async function createCustomerRow(user) {
+    const created = await ctx.supaCustomer(`/rest/v1/${ctx.CFG.customersTable}`, {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({
+        auth_id: user.id,
+        name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Client",
+        email: ctx.normalizeEmail(user.email || ""),
+        phone: ctx.normalizeDigits(user.user_metadata?.phone || ""),
+        addresses: [],
+        wishlist: readWishlist()
+      })
+    });
+    return Array.isArray(created) ? created[0] : created;
+  }
+
   async function loadRemoteCustomerProfile(user) {
     if (!user?.id) throw new Error("جلسة عميل غير صالحة");
     const rows = await ctx.supaCustomer(
       `/rest/v1/${ctx.CFG.customersTable}?auth_id=eq.${encodeURIComponent(user.id)}&select=*`
     );
     let profile = Array.isArray(rows) ? rows[0] : null;
-    if (!profile) {
-      const created = await ctx.supaCustomer(`/rest/v1/${ctx.CFG.customersTable}`, {
-        method: "POST",
-        headers: { Prefer: "return=representation" },
-        body: JSON.stringify({
-          auth_id: user.id,
-          name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Client",
-          email: ctx.normalizeEmail(user.email || ""),
-          phone: ctx.normalizeDigits(user.user_metadata?.phone || ""),
-          addresses: [],
-          wishlist: readWishlist()
-        })
-      });
-      profile = Array.isArray(created) ? created[0] : created;
-    }
+    if (!profile) profile = await createCustomerRow(user);
     const customer = normalizeCustomerRow(profile);
     if (!customer) throw new Error("تعذر تحميل حساب العميل");
     customer.authId = user.id;
@@ -152,53 +155,61 @@ export function install(ctx) {
     return customer;
   }
 
-  async function customerRegister(data = {}) {
-    const name = String(data.name || "").trim();
-    const email = ctx.normalizeEmail(data.email || "");
-    const phone = ctx.normalizeDigits(data.phone || "");
-    const password = String(data.password || "");
-    if (name.length < 2) throw new Error("أدخل الاسم الكامل / Nom complet requis");
-    if (!ctx.isEmail(email)) throw new Error("أدخل بريدًا إلكترونيًا صالحًا / E-mail invalide");
-    if (phone && phone.length !== 8) throw new Error("رقم الهاتف يجب أن يكون 8 أرقام / 8 chiffres requis");
-    ctx.validatePassword(password);
-    const wishlist = ctx.uniqueStrings(data.wishlist || readWishlist()).slice(0, ctx.MAX_WISHLIST);
+  /** Validated registration fields. */
+  function registrationFields(data) {
+    const fields = {
+      name: String(data.name || "").trim(),
+      email: ctx.normalizeEmail(data.email || ""),
+      phone: ctx.normalizeDigits(data.phone || ""),
+      password: String(data.password || "")
+    };
+    if (fields.name.length < 2) throw new Error("أدخل الاسم الكامل / Nom complet requis");
+    if (!ctx.isEmail(fields.email)) throw new Error("أدخل بريدًا إلكترونيًا صالحًا / E-mail invalide");
+    if (fields.phone && fields.phone.length !== 8)
+      throw new Error("رقم الهاتف يجب أن يكون 8 أرقام / 8 chiffres requis");
+    ctx.validatePassword(fields.password);
+    return fields;
+  }
 
-    if (ctx.REMOTE) {
-      const res = await fetch(ctx.remoteUrl("/auth/v1/signup"), {
-        method: "POST",
-        headers: { apikey: ctx.CFG.supabaseAnonKey, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          data: { full_name: name, phone }
-        })
-      });
-      if (!res.ok) throw new Error((await ctx.readErrorMessage(res)) || "تعذر إنشاء الحساب");
-      const auth = await res.json();
-      if (!auth.access_token || !auth.user) {
-        throw new Error(
-          "تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتأكيده ثم سجّل الدخول. / Vérifiez votre e-mail pour confirmer le compte."
-        );
-      }
-      setCustomerSession(auth);
-      writeWishlist(wishlist);
-      const profile = await loadRemoteCustomerProfile(auth.user);
-      if (wishlist.length) await customerSyncWishlist(wishlist);
-      return profile;
+  /** Supabase signup; refuses when the account still needs e-mail confirmation. */
+  async function registerRemote(fields, wishlist) {
+    const res = await fetch(ctx.remoteUrl("/auth/v1/signup"), {
+      method: "POST",
+      headers: { apikey: ctx.CFG.supabaseAnonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: fields.email,
+        password: fields.password,
+        data: { full_name: fields.name, phone: fields.phone }
+      })
+    });
+    if (!res.ok) throw new Error((await ctx.readErrorMessage(res)) || "تعذر إنشاء الحساب");
+    const auth = await res.json();
+    if (!auth.access_token || !auth.user) {
+      throw new Error(
+        "تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتأكيده ثم سجّل الدخول. / Vérifiez votre e-mail pour confirmer le compte."
+      );
     }
+    setCustomerSession(auth);
+    writeWishlist(wishlist);
+    const profile = await loadRemoteCustomerProfile(auth.user);
+    if (wishlist.length) await customerSyncWishlist(wishlist);
+    return profile;
+  }
 
+  /** Local (draft) account, stored with a hashed password. */
+  async function registerLocal(fields, wishlist) {
     const rows = readLocalCustomers();
-    if (rows.some((item) => ctx.normalizeEmail(item.email) === email))
+    if (rows.some((item) => ctx.normalizeEmail(item.email) === fields.email))
       throw new Error("الحساب موجود بالفعل / Compte déjà existant");
-    if (phone && rows.some((item) => ctx.normalizeDigits(item.phone) === phone))
+    if (fields.phone && rows.some((item) => ctx.normalizeDigits(item.phone) === fields.phone))
       throw new Error("رقم الهاتف مستخدم بالفعل");
     const customer = {
       id: ctx.uid("cust"),
       authId: "",
-      name,
-      email,
-      phone,
-      passwordHash: await ctx.hashPassword(password),
+      name: fields.name,
+      email: fields.email,
+      phone: fields.phone,
+      passwordHash: await ctx.hashPassword(fields.password),
       addresses: [],
       wishlist,
       createdAt: ctx.nowISO()
@@ -212,62 +223,86 @@ export function install(ctx) {
     return ctx.currentCustomer;
   }
 
-  async function customerLogin(identifier, password) {
-    let email = "";
-    let phone = "";
-    let secret = password;
+  async function customerRegister(data = {}) {
+    const fields = registrationFields(data);
+    const wishlist = ctx.uniqueStrings(data.wishlist || readWishlist()).slice(0, ctx.MAX_WISHLIST);
+    if (ctx.REMOTE) return registerRemote(fields, wishlist);
+    return registerLocal(fields, wishlist);
+  }
+
+  /** Accepts either `{email|phone, password}` or `(identifier, password)`. */
+  function loginIdentifiers(identifier, password) {
+    const parsed = { email: "", phone: "", secret: "" };
     if (identifier && typeof identifier === "object") {
-      email = ctx.normalizeEmail(identifier.email || "");
-      phone = ctx.normalizeDigits(identifier.phone || "");
-      secret = String(identifier.password || "");
+      parsed.email = ctx.normalizeEmail(identifier.email || "");
+      parsed.phone = ctx.normalizeDigits(identifier.phone || "");
+      parsed.secret = String(identifier.password || "");
     } else {
       const value = String(identifier || "").trim();
-      if (ctx.isEmail(value)) email = ctx.normalizeEmail(value);
-      else phone = ctx.normalizeDigits(value);
-      secret = String(password || "");
+      if (ctx.isEmail(value)) parsed.email = ctx.normalizeEmail(value);
+      else parsed.phone = ctx.normalizeDigits(value);
+      parsed.secret = String(password || "");
     }
-    if (!email && !phone) throw new Error("أدخل البريد الإلكتروني أو رقم الهاتف");
-    if (!secret) throw new Error("أدخل كلمة المرور");
-    ctx.checkLoginLock(email || phone);
+    assertLoginIdentifiers(parsed);
+    return parsed;
+  }
 
-    if (ctx.REMOTE && email) {
-      try {
-        const res = await fetch(ctx.remoteUrl("/auth/v1/token?grant_type=password"), {
-          method: "POST",
-          headers: { apikey: ctx.CFG.supabaseAnonKey, "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password: secret })
-        });
-        if (!res.ok) throw new Error((await ctx.readErrorMessage(res)) || "بيانات الدخول غير صحيحة");
-        const auth = await res.json();
-        setCustomerSession(auth);
-        const profile = await loadRemoteCustomerProfile(auth.user);
-        ctx.clearLoginFailures(email || phone);
-        return profile;
-      } catch (error) {
-        // Local demo accounts still work when Supabase is configured.
-        console.warn("Restore: remote customer login failed, trying local demo account", error.message);
-      }
-    }
+  function assertLoginIdentifiers(parsed) {
+    if (!parsed.email && !parsed.phone) throw new Error("أدخل البريد الإلكتروني أو رقم الهاتف");
+    if (!parsed.secret) throw new Error("أدخل كلمة المرور");
+  }
 
+  /** Supabase login for e-mail accounts; throws so the caller can fall back to a demo account. */
+  async function loginRemote(creds) {
+    const res = await fetch(ctx.remoteUrl("/auth/v1/token?grant_type=password"), {
+      method: "POST",
+      headers: { apikey: ctx.CFG.supabaseAnonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ email: creds.email, password: creds.secret })
+    });
+    if (!res.ok) throw new Error((await ctx.readErrorMessage(res)) || "بيانات الدخول غير صحيحة");
+    const auth = await res.json();
+    setCustomerSession(auth);
+    return loadRemoteCustomerProfile(auth.user);
+  }
+
+  /** Local (draft) login by e-mail or phone. */
+  async function loginLocal(creds) {
     const rows = readLocalCustomers();
     const customer = rows.find(
       (item) =>
-        (email && ctx.normalizeEmail(item.email) === email) || (phone && ctx.normalizeDigits(item.phone) === phone)
+        (creds.email && ctx.normalizeEmail(item.email) === creds.email) ||
+        (creds.phone && ctx.normalizeDigits(item.phone) === creds.phone)
     );
     if (!customer) {
-      ctx.noteLoginFailure(email || phone);
+      ctx.noteLoginFailure(creds.email || creds.phone);
       throw new Error("الحساب غير موجود / Compte introuvable");
     }
-    if (!(await ctx.verifyPassword(secret, customer.passwordHash))) {
-      ctx.noteLoginFailure(email || phone);
+    if (!(await ctx.verifyPassword(creds.secret, customer.passwordHash))) {
+      ctx.noteLoginFailure(creds.email || creds.phone);
       throw new Error("كلمة المرور غير صحيحة / Mot de passe incorrect");
     }
     ctx.currentCustomer = publicCustomer(customer);
     saveLocalCustomer();
     mergeWishlist(ctx.currentCustomer);
     notifyCustomer();
-    ctx.clearLoginFailures(email || phone);
+    ctx.clearLoginFailures(creds.email || creds.phone);
     return ctx.currentCustomer;
+  }
+
+  async function customerLogin(identifier, password) {
+    const creds = loginIdentifiers(identifier, password);
+    ctx.checkLoginLock(creds.email || creds.phone);
+    if (ctx.REMOTE && creds.email) {
+      try {
+        const profile = await loginRemote(creds);
+        ctx.clearLoginFailures(creds.email || creds.phone);
+        return profile;
+      } catch (error) {
+        // Local demo accounts still work when Supabase is configured.
+        console.warn("Restore: remote customer login failed, trying local demo account", error.message);
+      }
+    }
+    return loginLocal(creds);
   }
 
   function customerLogout() {

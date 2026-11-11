@@ -44,9 +44,8 @@ export default [
     },
     rules: strict
   },
-  // Legacy services/ui functions above the complexity budget are WARNINGS, frozen by scripts/check-complexity.mjs
-  // (count may only go down — see .complexity-baseline.json). New code and domain/data/core/scripts/tests are strict.
-  { files: ["assets/js/services/**/*.js", "assets/js/ui/**/*.js"], rules: { complexity: ["warn", 15] } },
+  // Phase 5.1: the legacy ratchet is empty (.complexity-baseline.json count 0), so services/ui are strict again —
+  // complexity > 15 is an error everywhere. scripts/check-complexity.mjs keeps guarding against regressions.
   {
     files: ["assets/js/domain/**/*.js", "assets/js/data/**/*.js", "assets/js/core/**/*.js"],
     rules: {

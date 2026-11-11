@@ -74,6 +74,30 @@ function check(file) {
 
 walk(root);
 
+/* Every HTML page must carry the same policy as the header: GitHub Pages ignores `_headers`, so a page without a
+   meta CSP has no policy there at all. This catches that, and catches drift between a page and the header. */
+const vercelFile = path.join(root, "vercel.json");
+if (fs.existsSync(vercelFile)) {
+  let header = "";
+  try {
+    const vercel = JSON.parse(fs.readFileSync(vercelFile, "utf8"));
+    header = vercel.headers.flatMap((h) => h.headers).find((h) => h.key === "Content-Security-Policy")?.value || "";
+  } catch (error) {
+    problems.push(`vercel.json: ${error.message}`);
+  }
+  if (header) {
+    const pages = fs
+      .readdirSync(root)
+      .filter((f) => f.endsWith(".html"))
+      .map((f) => ({ file: f, text: fs.readFileSync(path.join(root, f), "utf8") }));
+    for (const page of pages) {
+      const meta = page.text.match(/http-equiv="Content-Security-Policy" content="([^"]*)"/)?.[1];
+      if (!meta) problems.push(`${page.file}: no <meta> Content-Security-Policy (github pages has no header)`);
+      else if (meta !== header) problems.push(`${page.file}: meta CSP differs from vercel.json`);
+    }
+  }
+}
+
 for (const headerFile of ["vercel.json", "_headers"]) {
   const file = path.join(root, headerFile);
   if (!fs.existsSync(file)) continue;

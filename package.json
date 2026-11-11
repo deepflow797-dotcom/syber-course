@@ -21,7 +21,8 @@
     "typecheck": "tsc -p jsconfig.json",
     "format": "prettier --write \"assets/js/**/*.js\" \"scripts/**/*.mjs\" \"tests/**/*.mjs\" \"e2e/**/*.mjs\" \"*.js\" \"*.mjs\" \"*.json\"",
     "format:check": "prettier --check \"assets/js/**/*.js\" \"scripts/**/*.mjs\" \"tests/**/*.mjs\" \"e2e/**/*.mjs\" \"*.js\" \"*.mjs\" \"*.json\"",
-    "check:full": "npm run check && npm run test:e2e && bash scripts/check-secrets.sh"
+    "check:full": "npm run check && npm run test:e2e && bash scripts/check-secrets.sh",
+    "doctor": "node scripts/doctor.mjs"
   },
   "engines": {
     "node": ">=18"

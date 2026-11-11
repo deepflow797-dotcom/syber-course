@@ -12,10 +12,13 @@ npm run new-client          # asks name / phone / e-mail / colour / domain → .
 ```
 Then follow `../clients/<key>/CLIENT.md` (merchant's own free Supabase project + free Cloudflare/GitHub Pages).
 Brand lives only in `assets/js/brand.config.js` (`npm run brand` re-renders titles/manifest/sitemap/logos).
-Merchant manual: `guide.html`. Pushing fixes to existing merchants: `docs/UPDATING.md`.
+Merchant manual: `guide.html`. **Handover / تسليم المتجر: `docs/HANDOVER.md`** (what to edit, how to deploy, how to
+back up and restore, what to do when something breaks). Pushing fixes to existing merchants: `docs/UPDATING.md`.
 
 ## Code layout
 See `docs/ARCHITECTURE.md` (services / ui / domain / data / core; `npm run check` = lint + eslint + unit + smoke + db tests).
+Before a fresh deployment run `npm run doctor`: it checks the runtime, the files, that the CSP matches on every page,
+that the icons are 8-bit, that the service-worker shell references real files, and that the backup module is present.
 
 ## What is included
 

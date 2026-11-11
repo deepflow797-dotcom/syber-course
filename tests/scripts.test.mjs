@@ -119,3 +119,33 @@ test("template vercel.json and template _headers also agree (apply-brand keeps t
   assert.equal(line.trim().slice("Content-Security-Policy:".length).trim(), vcsp);
 });
 test.after(() => fs.rmSync(out, { recursive: true, force: true }));
+
+/* ---------- P6: doctor + handover docs ---------- */
+
+test("doctor exits 0 on a ready repository", () => {
+  const result = run(["scripts/doctor.mjs"]);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /READY — 0 blocking problem/);
+});
+
+test("doctor fails and names the page when a page loses its meta CSP", () => {
+  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), "doctor-"));
+  for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
+    if (entry.name === "node_modules" || entry.name === ".git" || entry.name === "reports") continue;
+    fs.cpSync(path.join(ROOT, entry.name), path.join(sandbox, entry.name), { recursive: true });
+  }
+  const page = path.join(sandbox, "guide.html");
+  fs.writeFileSync(page, fs.readFileSync(page, "utf8").replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, ""));
+  const result = run(["scripts/doctor.mjs"], sandbox);
+  assert.equal(result.status, 1, "a page without a policy must be a blocking problem");
+  assert.match(result.stdout, /FAIL meta CSP drift — guide\.html/);
+});
+
+test("the handover document exists and covers the three questions a merchant asks", () => {
+  const docs = fs.readFileSync(path.join(ROOT, "docs/HANDOVER.md"), "utf8");
+  assert.match(docs, /أين أعدّل ماذا/, "where to edit");
+  assert.match(docs, /النشر/, "how to deploy");
+  assert.match(docs, /النسخ الاحتياطي والاستعادة/, "how to back up and restore");
+  assert.match(docs, /service_role/, "the one forbidden thing is stated");
+  assert.match(docs, /Handover \(English\)/, "the English half exists too");
+});

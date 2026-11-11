@@ -29,6 +29,7 @@ import { install as s11 } from "./services/11-currency.js";
 import { install as s12 } from "./services/12-pages-settings.js";
 import { install as s13 } from "./services/13-store-utils.js";
 import { install as s14 } from "./services/14-sync-events.js";
+import { install as s15 } from "./services/15-backup.js";
 
 if (!RAW) {
   console.warn("Restore: window.STORE missing");
@@ -52,6 +53,7 @@ if (!RAW) {
   s12(ctx); // Content pages and owner settings
   s13(ctx); // Query, pricing and store utilities
   s14(ctx); // Cross-tab and cross-device notifications
+  s15(ctx); // Backup export / import (P4)
   ctx.applyDocument();
   R = {
     config: ctx.CFG,
@@ -167,6 +169,10 @@ if (!RAW) {
     discardDraft: ctx.discardDraft,
     useDraft: ctx.useDraft,
     resetLocalDemo: ctx.resetLocalDemo,
+    backupExport: ctx.backupExport,
+    backupPreview: ctx.backupPreview,
+    backupApply: ctx.backupApply,
+    backupRestorePrevious: ctx.backupRestorePrevious,
     loadRemoteState: ctx.loadRemoteState,
     catalog: ctx.catalog,
     loadCatalog: ctx.loadCatalog,

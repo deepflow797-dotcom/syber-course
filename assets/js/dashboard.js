@@ -33,6 +33,7 @@ import { install as s21 } from "./ui/dashboard/21-events-nav.js";
 import { install as s22 } from "./ui/dashboard/22-events-forms.js";
 import { install as s22b } from "./ui/dashboard/22b-events-settings.js";
 import { install as s23 } from "./ui/dashboard/23-events-misc.js";
+import { install as s24b } from "./ui/dashboard/24-backup.js";
 import { install as s24 } from "./ui/dashboard/24-boot.js";
 
 const _initDashboard = () => {
@@ -66,6 +67,7 @@ const _initDashboard = () => {
   s22(ctx); // Event delegation (part 2a)
   s22b(ctx); // Event delegation (part 2b)
   s23(ctx); // Event delegation (part 3)
+  s24b(ctx); // Backup & restore (P4)
   s24(ctx); // Boot
 };
 

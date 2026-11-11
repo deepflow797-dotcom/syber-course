@@ -73,6 +73,7 @@ export function install(ctx) {
             <p class="form-note u-mt-11">${ctx.dt("لربط Supabase: ضع URL و anon key في config.js ثم نفّذ ملف supabase/schema.sql. ستتزامن الطلبات والحالة تلقائيًا.", "Pour Supabase : renseignez URL et anon key dans config.js puis exécutez supabase/schema.sql.")}</p>
             <a class="btn btn-soft btn-sm" href="supabase/schema.sql" target="_blank">${ctx.dt("عرض ملف SQL", "Voir le fichier SQL")}</a>
           </div></article>
+          <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("نسخة احتياطية", "Sauvegarde")}</h3></div>${ctx.backupCardHTML()}</article>
           <article class="dash-card"><div class="dash-card-head"><h3>${ctx.dt("منطقة الخطر", "Zone sensible")}</h3></div><div class="dash-card-body">
             <p class="u-fs-10 u-muted u-lh-18 u-mb-12">${ctx.dt("إعادة تعيين البيانات التجريبية ستحذف الطلبات والمسودات والحسابات المحلية. لا يمكن التراجع.", "Réinitialiser la démo supprime commandes, brouillons et comptes locaux. Action irréversible.")}</p>
             <div class="u-flex u-gap-7 u-wrap"><button class="btn btn-soft btn-sm" data-action="publish">${ctx.icon("publish")} ${ctx.dt("نشر الآن", "Publier")}</button><button class="btn btn-danger btn-sm" data-action="reset-demo">${ctx.icon("trash")} ${ctx.dt("إعادة تعيين التجربة", "Réinitialiser la démo")}</button></div>

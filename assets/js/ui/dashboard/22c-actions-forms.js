@@ -86,6 +86,10 @@ function shellActions(ctx) {
       if (!first) return;
       if (ask(ctx, "تأكيد أخير: لا يمكن التراجع.", "Dernière confirmation : irréversible.")) ctx.R.resetLocalDemo();
     },
+    "backup-export": () => ctx.backupExportNow(),
+    "backup-import": () => ctx.backupAskImport(),
+    "backup-apply": ({ id }) => ctx.backupDoApply(id === "merge" ? "merge" : "replace"),
+    "backup-undo": () => ctx.backupDoUndo(),
     "close-modal": () => ctx.closeModal(),
     "modal-backdrop": ({ node, event }) => {
       if (event.target === node) ctx.closeModal();

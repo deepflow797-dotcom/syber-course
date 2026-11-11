@@ -147,6 +147,7 @@ export function install(ctx) {
     down: '<path d="M18 9l-6 6-6-6"/>',
     check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
     arrows: '<path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/>',
+    restore: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>',
     upload: '<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>',
     image:
       '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',

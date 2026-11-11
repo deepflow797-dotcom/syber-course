@@ -1,6 +1,8 @@
 /* app.js → Product page
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
 import { createProductsRepo } from "../../data/repositories/products.repo.js";
+import { mapRepoProduct } from "./11a-product-mappers.js";
+import { galleryHTML, productExtraHTML, productNotFoundHTML, relatedHTML } from "./11b-product-blocks.js";
 
 export function install(ctx) {
   Object.assign(ctx, {
@@ -101,14 +103,18 @@ export function install(ctx) {
     return (reviews.reduce((sum, r) => sum + (Number(r.rating) || 5), 0) / Math.max(1, reviews.length)).toFixed(1);
   }
 
+  const SPEC_KEYS = {
+    Macbook: ["cpu", "ram", "storage", "screen", "keyboard", "condition"],
+    Laptop: ["cpu", "ram", "storage", "screen", "keyboard", "condition"],
+    Smartphone: ["storage", "screen", "condition", "battery"],
+    Tablets: ["storage", "screen", "condition", "battery"],
+    "Apple Watch": ["screen", "condition", "battery"],
+    Playstation: ["storage", "condition"]
+  };
+  const DEFAULT_SPEC_KEYS = ["condition", "battery"];
+
   function specKeysFor(p) {
-    if (p.type === "Macbook" || p.type === "Laptop")
-      return ["cpu", "ram", "storage", "screen", "keyboard", "condition"];
-    if (p.type === "Smartphone") return ["storage", "screen", "condition", "battery"];
-    if (p.type === "Tablets") return ["storage", "screen", "condition", "battery"];
-    if (p.type === "Apple Watch") return ["screen", "condition", "battery"];
-    if (p.type === "Playstation") return ["storage", "condition"];
-    return ["condition", "battery"];
+    return SPEC_KEYS[p.type] || DEFAULT_SPEC_KEYS;
   }
 
   function pdpSpecsHTML(p) {
@@ -145,52 +151,124 @@ export function install(ctx) {
     return v;
   }
 
+  const isColorOption = (name) => /color|colour/i.test(String(name));
+
+  function colorButtonHTML(ctx, p, o, val, active) {
+    const c = (p.colors || []).find((x) => x.name === val);
+    return `<button class="opt-btn color-opt ${active ? "active" : ""}" type="button" data-opt="${ctx.esc(o.name)}" data-value="${ctx.esc(val)}" data-color-hex="${ctx.esc(c?.hex || "")}"><span class="color-dot" style="background:${c ? c.hex : "#ccc"}"></span>${ctx.esc(val)}</button>`;
+  }
+
+  function optionButtonHTML(ctx, o, val, active) {
+    return `<button class="opt-btn ${active ? "active" : ""}" type="button" dir="auto" data-opt="${ctx.esc(o.name)}" data-value="${ctx.esc(val)}">${ctx.esc(optValue(o.name, val))}</button>`;
+  }
+
+  function optionRowHTML(o) {
+    if (!o.values.length) return "";
+    const isColor = isColorOption(o.name);
+    const buttons = o.values
+      .map((val) => {
+        const active = PDP.sel[o.name] === val;
+        return isColor ? colorButtonHTML(ctx, PDP.p, o, val, active) : optionButtonHTML(ctx, o, val, active);
+      })
+      .join("");
+    return `<div class="opt-label">${ctx.esc(optLabel(o.name))} <span dir="auto">${ctx.esc(optValue(o.name, PDP.sel[o.name] || ""))}</span></div><div class="opt-values">${buttons}</div>`;
+  }
+
+  function pdpBadges(p, currentCondition) {
+    const battery = p.battery
+      ? `<span class="product-badge battery">${ctx.ICON.bolt} ${ctx.esc(ctx.t("battery"))} ${p.battery}%</span>`
+      : "";
+    const macos =
+      p.type === "Macbook" ? `<span class="product-badge">${ctx.ICON.apple} ${ctx.esc(ctx.t("macos"))}</span>` : "";
+    return `<div class="product-badges">${battery}<span class="product-badge">${ctx.esc(currentCondition)}</span>${macos}</div>`;
+  }
+
+  function pdpPriceRow(price, compare, disc) {
+    const was =
+      compare && compare > price
+        ? `<span class="price-was">${ctx.money(compare)}</span><span class="price-badge">-${disc}%</span>`
+        : "";
+    return `<div class="price-row"><span class="price-now">${ctx.money(price)}</span>${was}</div>`;
+  }
+
+  function pdpActionsHTML(soldOut) {
+    const label = soldOut ? ctx.esc(ctx.t("soldOut")) : ctx.esc(ctx.t("addToCart"));
+    const disabled = soldOut ? "disabled" : "";
+    return `<div class="product-actions">
+          <button class="btn btn-primary" type="button" data-add-cart ${disabled}>${label}</button>
+          <button class="btn btn-dark" type="button" data-buy-now ${disabled}>${ctx.esc(ctx.t("buyNow"))}</button>
+        </div>`;
+  }
+
+  function pdpTrustHTML(p) {
+    const last =
+      p.type === "Macbook"
+        ? `<div>${ctx.ICON.badgeCheck}<span>${ctx.esc(ctx.t("macos"))}<small>${ctx.esc(ctx.t("checkedSub"))}</small></span></div>`
+        : `<div>${ctx.ICON.badgeCheck}<span>${ctx.esc(ctx.t("checked"))}<small>${ctx.esc(ctx.t("checkedSub"))}</small></span></div>`;
+    return `<div class="trust-mini">
+          <div>${ctx.ICON.truck}<span>${ctx.esc(ctx.t("freeDelivery"))}<small>${ctx.esc(ctx.t("freeDeliverySub"))}</small></span></div>
+          <div>${ctx.ICON.shield}<span>${ctx.esc(ctx.t("warranty"))}<small>${ctx.esc(ctx.t("warrantySub"))}</small></span></div>
+          <div>${ctx.ICON.return}<span>${ctx.esc(ctx.t("returns"))}<small>${ctx.esc(ctx.t("returnsSub"))}</small></span></div>
+          ${last}
+        </div>`;
+  }
+
+  function pdpIncludedHTML(p) {
+    const items = (p.includes || [])
+      .map((item) => `<li>${ctx.ICON.check}<span>${ctx.esc(ctx.L(item))}</span></li>`)
+      .join("");
+    return `<div class="included-card">
+          <h3>${ctx.esc(ctx.t("whatsIncluded"))}</h3>
+          <ul>${items}</ul>
+        </div>`;
+  }
+
+  function pdpAccordionHTML(p) {
+    const shipping = ctx.esc(ctx.L(ctx.SET.shippingNote));
+    const cities = ctx.esc(
+      ctx.R.lang === "ar"
+        ? "نواكشوط: توصيل مجاني · باقي المدن: رسوم حسب الولاية."
+        : "Nouakchott : livraison offerte · Autres villes : frais selon la wilaya."
+    );
+    const warranty = ctx.esc(
+      ctx.R.lang === "ar"
+        ? "ضمان 12 شهرًا يغطي الأعطال التقنية، وإرجاع خلال 10 أيام في حال وجود مشكلة."
+        : "Garantie 12 mois couvrant les pannes techniques et retour sous 10 jours en cas de problème."
+    );
+    return `<div class="accordion">
+          <details open><summary>${ctx.esc(ctx.t("description"))}</summary><div class="acc-body"><p>${ctx.esc(ctx.L(p.description))}</p><p class="muted">${ctx.esc(ctx.L(ctx.SET.originalDevice))} · ${ctx.esc(ctx.t("warrantyMonths", { months: p.warrantyMonths || 12 }))}</p></div></details>
+          <details><summary>${ctx.esc(ctx.t("shippingDelivery"))}</summary><div class="acc-body"><p>${shipping}</p><p>${cities}</p></div></details>
+          <details><summary>${ctx.esc(ctx.t("warrantyReturns"))}</summary><div class="acc-body"><p>${warranty}</p></div></details>
+        </div>`;
+  }
+
+  function currentConditionLabel(p) {
+    const conditionOption = p.options?.find((o) => /condition|état/i.test(o.name));
+    const selected = conditionOption?.values?.find((value) => value === PDP.sel[conditionOption.name]);
+    return ctx.conditionLabel(selected || p.condition);
+  }
+
+  function whatsappQuestion(p, v) {
+    const hello = ctx.R.lang === "ar" ? "مرحباً" : "Bonjour";
+    const intent = ctx.R.lang === "ar" ? "أريد الاستفسار عن" : "je voudrais des informations sur";
+    return `${hello} ${ctx.L(ctx.SET.storeName)}، ${intent} ${p.title}${v?.title ? ` (${v.title})` : ""}.`;
+  }
+
   function pdpInfoHTML() {
     const p = PDP.p;
     const v = pdpVariant();
     const price = Number(v?.price ?? p.price);
     const compare = v?.compare ?? p.compare;
-    const disc = ctx.discountFor(price, compare);
     const rating = productRating(p);
-    const reviewsCount = productReviews(p).length;
-    const conditionOption = p.options?.find((o) => /condition|état/i.test(o.name));
-    const currentCondition = ctx.conditionLabel(
-      conditionOption?.values?.find((value) => value === PDP.sel[conditionOption.name]) || p.condition
-    );
-    const options = (p.options || [])
-      .map((o) => {
-        if (!o.values.length) return "";
-        const isColor = /color|colour/i.test(o.name);
-        const buttons = o.values
-          .map((val) => {
-            const active = PDP.sel[o.name] === val;
-            if (isColor) {
-              const c = (p.colors || []).find((x) => x.name === val);
-              return `<button class="opt-btn color-opt ${active ? "active" : ""}" type="button" data-opt="${ctx.esc(o.name)}" data-value="${ctx.esc(val)}" data-color-hex="${ctx.esc(c?.hex || "")}"><span class="color-dot" style="background:${c ? c.hex : "#ccc"}"></span>${ctx.esc(val)}</button>`;
-            }
-            return `<button class="opt-btn ${active ? "active" : ""}" type="button" dir="auto" data-opt="${ctx.esc(o.name)}" data-value="${ctx.esc(val)}">${ctx.esc(optValue(o.name, val))}</button>`;
-          })
-          .join("");
-        return `<div class="opt-label">${ctx.esc(optLabel(o.name))} <span dir="auto">${ctx.esc(optValue(o.name, PDP.sel[o.name] || ""))}</span></div><div class="opt-values">${buttons}</div>`;
-      })
-      .join("");
-
     const soldOut = Number(p.stock) <= 0 || !p.available || !v?.available;
-    const whatsappText = `${ctx.R.lang === "ar" ? "مرحباً" : "Bonjour"} ${ctx.L(ctx.SET.storeName)}، ${ctx.R.lang === "ar" ? "أريد الاستفسار عن" : "je voudrais des informations sur"} ${p.title}${v?.title ? ` (${v.title})` : ""}.`;
+    const options = (p.options || []).map(optionRowHTML).join("");
     return `
       <div class="product-info" id="product-info">
         <div class="vendor">${ctx.esc(p.vendor || ctx.L(ctx.SET.storeName))}</div>
         <h1>${ctx.esc(p.title)}</h1>
-        <div class="rating">${[1, 2, 3, 4, 5].map((n) => `<span class="tp-star${n > Math.round(Number(rating)) ? " off" : ""}" data-icon="star"></span>`).join("")}<span>${rating} · ${reviewsCount} ${ctx.esc(ctx.t("reviews"))}</span></div>
-        <div class="product-badges">
-          ${p.battery ? `<span class="product-badge battery">${ctx.ICON.bolt} ${ctx.esc(ctx.t("battery"))} ${p.battery}%</span>` : ""}
-          <span class="product-badge">${ctx.esc(currentCondition)}</span>
-          ${p.type === "Macbook" ? `<span class="product-badge">${ctx.ICON.apple} ${ctx.esc(ctx.t("macos"))}</span>` : ""}
-        </div>
-        <div class="price-row">
-          <span class="price-now">${ctx.money(price)}</span>
-          ${compare && compare > price ? `<span class="price-was">${ctx.money(compare)}</span><span class="price-badge">-${disc}%</span>` : ""}
-        </div>
+        <div class="rating">${[1, 2, 3, 4, 5].map((n) => `<span class="tp-star${n > Math.round(Number(rating)) ? " off" : ""}" data-icon="star"></span>`).join("")}<span>${rating} · ${productReviews(p).length} ${ctx.esc(ctx.t("reviews"))}</span></div>
+        ${pdpBadges(p, currentConditionLabel(p))}
+        ${pdpPriceRow(price, compare, ctx.discountFor(price, compare))}
         <div class="payment-offer-line">${ctx.ICON.bolt}<span>${ctx.esc(ctx.L(ctx.SET.paymentOffer))}</span></div>
         ${options}
         ${pdpSpecsHTML(p)}
@@ -200,26 +278,11 @@ export function install(ctx) {
           <span id="qty-val">${PDP.qty}</span>
           <button type="button" data-qty="1" aria-label="+">+</button>
         </div>
-        <div class="product-actions">
-          <button class="btn btn-primary" type="button" data-add-cart ${soldOut ? "disabled" : ""}>${soldOut ? ctx.esc(ctx.t("soldOut")) : ctx.esc(ctx.t("addToCart"))}</button>
-          <button class="btn btn-dark" type="button" data-buy-now ${soldOut ? "disabled" : ""}>${ctx.esc(ctx.t("buyNow"))}</button>
-        </div>
-        <a class="whatsapp-order" href="https://wa.me/${ctx.esc(ctx.SET.whatsapp)}?text=${encodeURIComponent(whatsappText)}" target="_blank" rel="noopener">${ctx.ICON.whatsapp} ${ctx.esc(ctx.t("orderWhatsApp"))}</a>
-        <div class="trust-mini">
-          <div>${ctx.ICON.truck}<span>${ctx.esc(ctx.t("freeDelivery"))}<small>${ctx.esc(ctx.t("freeDeliverySub"))}</small></span></div>
-          <div>${ctx.ICON.shield}<span>${ctx.esc(ctx.t("warranty"))}<small>${ctx.esc(ctx.t("warrantySub"))}</small></span></div>
-          <div>${ctx.ICON.return}<span>${ctx.esc(ctx.t("returns"))}<small>${ctx.esc(ctx.t("returnsSub"))}</small></span></div>
-          ${p.type === "Macbook" ? `<div>${ctx.ICON.badgeCheck}<span>${ctx.esc(ctx.t("macos"))}<small>${ctx.esc(ctx.t("checkedSub"))}</small></span></div>` : `<div>${ctx.ICON.badgeCheck}<span>${ctx.esc(ctx.t("checked"))}<small>${ctx.esc(ctx.t("checkedSub"))}</small></span></div>`}
-        </div>
-        <div class="included-card">
-          <h3>${ctx.esc(ctx.t("whatsIncluded"))}</h3>
-          <ul>${(p.includes || []).map((item) => `<li>${ctx.ICON.check}<span>${ctx.esc(ctx.L(item))}</span></li>`).join("")}</ul>
-        </div>
-        <div class="accordion">
-          <details open><summary>${ctx.esc(ctx.t("description"))}</summary><div class="acc-body"><p>${ctx.esc(ctx.L(p.description))}</p><p class="muted">${ctx.esc(ctx.L(ctx.SET.originalDevice))} · ${ctx.esc(ctx.t("warrantyMonths", { months: p.warrantyMonths || 12 }))}</p></div></details>
-          <details><summary>${ctx.esc(ctx.t("shippingDelivery"))}</summary><div class="acc-body"><p>${ctx.esc(ctx.L(ctx.SET.shippingNote))}</p><p>${ctx.esc(ctx.R.lang === "ar" ? "نواكشوط: توصيل مجاني · باقي المدن: رسوم حسب الولاية." : "Nouakchott : livraison offerte · Autres villes : frais selon la wilaya.")}</p></div></details>
-          <details><summary>${ctx.esc(ctx.t("warrantyReturns"))}</summary><div class="acc-body"><p>${ctx.esc(ctx.R.lang === "ar" ? "ضمان 12 شهرًا يغطي الأعطال التقنية، وإرجاع خلال 10 أيام في حال وجود مشكلة." : "Garantie 12 mois couvrant les pannes techniques et retour sous 10 jours en cas de problème.")}</p></div></details>
-        </div>
+        ${pdpActionsHTML(soldOut)}
+        <a class="whatsapp-order" href="https://wa.me/${ctx.esc(ctx.SET.whatsapp)}?text=${encodeURIComponent(whatsappQuestion(p, v))}" target="_blank" rel="noopener">${ctx.ICON.whatsapp} ${ctx.esc(ctx.t("orderWhatsApp"))}</a>
+        ${pdpTrustHTML(p)}
+        ${pdpIncludedHTML(p)}
+        ${pdpAccordionHTML(p)}
       </div>
       ${renderProductReviews(p)}`;
   }
@@ -308,62 +371,28 @@ export function install(ctx) {
       const repo = createProductsRepo(ctx.R.config);
       const row = await repo.getByHandle(handle);
       if (!row) return local;
-      const variants = Array.isArray(row.restore_product_variants)
-        ? row.restore_product_variants.map((v) => ({
-            id: v.id,
-            sku: v.sku,
-            color: v.color,
-            storage: v.storage,
-            price: Math.max(0, Number(row.price || 0) + Number(v.price_delta || 0)),
-            stock: Number(v.stock || 0),
-            available: Number(v.stock || 0) > 0
-          }))
-        : local?.variants || [];
-      return Object.assign({}, local || {}, {
-        handle: row.handle,
-        title: row.title || local?.title,
-        brand: row.brand || local?.brand,
-        price: Number(row.price ?? local?.price ?? 0),
-        compareAt: row.compare_at ?? local?.compareAt,
-        stock: Number(row.stock ?? local?.stock ?? 0),
-        condition: row.condition || local?.condition,
-        specs: row.specs && Object.keys(row.specs).length ? row.specs : local?.specs || {},
-        images: Array.isArray(row.images) && row.images.length ? row.images : local?.images || [],
-        image: (Array.isArray(row.images) && row.images[0]) || local?.image,
-        variants,
-        options: local?.options || [],
-        collections: local?.collections || [],
-        description: local?.description || row.title,
-        active: row.active !== false,
-        _source: "restore_products"
-      });
+      return mapRepoProduct(row, local);
     } catch (e) {
       console.warn("restore_products repo fallback", e);
       return local;
     }
   }
 
-  async function renderProduct() {
-    const handle = new URLSearchParams(location.search).get("handle");
-    const p = handle ? await loadProductByHandle(handle) : null;
-    if (!p) {
-      document.title = `${ctx.t("productNotFound")} | ${ctx.L(ctx.SET.storeName)}`;
-      const crumb = document.getElementById("prod-crumb");
-      if (crumb)
-        crumb.innerHTML = `<a href="index.html">${ctx.esc(ctx.t("homeCrumb"))}</a><span>/</span><span>${ctx.esc(ctx.t("productNotFound"))}</span>`;
-      const root = document.getElementById("product-root");
-      if (root)
-        root.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-        <h2>${ctx.esc(ctx.t("productNotFound"))}</h2>
-        <p>${ctx.esc(ctx.t("productNotFoundText"))}</p>
-        <a class="btn btn-primary" href="collection.html?handle=all">${ctx.esc(ctx.t("browseAll"))}</a>
-      </div>`;
-      ["product-extra", "product-related"].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = "";
-      });
-      return;
-    }
+  function showNotFound() {
+    document.title = `${ctx.t("productNotFound")} | ${ctx.L(ctx.SET.storeName)}`;
+    const crumb = document.getElementById("prod-crumb");
+    if (crumb)
+      crumb.innerHTML = `<a href="index.html">${ctx.esc(ctx.t("homeCrumb"))}</a><span>/</span><span>${ctx.esc(ctx.t("productNotFound"))}</span>`;
+    const host = ensureBlock("product-root");
+    host.innerHTML = productNotFoundHTML(ctx);
+    ["product-extra", "product-related"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = "";
+    });
+  }
+
+  /** Resets PDP state for a freshly loaded product. */
+  function seedPdp(p) {
     PDP.p = p;
     PDP.qty = 1;
     PDP.sel = {};
@@ -375,73 +404,63 @@ export function install(ctx) {
       if (o.values.length) PDP.sel[o.name] = o.values[0];
     });
     const v = pdpVariant();
-    if (v)
-      (p.options || []).forEach((o, i) => {
-        if (v["o" + (i + 1)]) PDP.sel[o.name] = v["o" + (i + 1)];
-      });
+    if (!v) return;
+    (p.options || []).forEach((o, i) => {
+      if (v[`o${i + 1}`]) PDP.sel[o.name] = v[`o${i + 1}`];
+    });
+  }
 
-    ctx.applyProductSeo(p);
+  function renderBreadcrumb(p) {
     const col = ctx.S.collections.find((c) => (p.collections || []).includes(c.handle));
     const crumb = document.getElementById("prod-crumb");
-    if (crumb) {
-      crumb.innerHTML = `<a href="index.html">${ctx.esc(ctx.t("homeCrumb"))}</a><span>/</span><a href="collection.html?handle=${encodeURIComponent(p.collections?.[0] || "all")}">${ctx.esc(col ? ctx.L(col.title) : ctx.t("shop"))}</a><span>/</span><span>${ctx.esc(p.title)}</span>`;
-    }
+    if (!crumb) return;
+    const collection = encodeURIComponent(p.collections?.[0] || "all");
+    crumb.innerHTML = `<a href="index.html">${ctx.esc(ctx.t("homeCrumb"))}</a><span>/</span><a href="collection.html?handle=${collection}">${ctx.esc(col ? ctx.L(col.title) : ctx.t("shop"))}</a><span>/</span><span>${ctx.esc(p.title)}</span>`;
+  }
 
+  function galleryImages(p) {
     const images = [...new Set([p.image, ...(p.images || []), ...Object.values(p.colorImages || {})].filter(Boolean))];
     const initialImage = p.colorImages?.[p.colors?.[0]?.name] || images[0];
-    const root = document.getElementById("product-root");
-    root.innerHTML = `
-      <div class="gallery">
-        <div class="gallery-main">
-          <img id="gallery-main-img" src="${initialImage}" alt="${ctx.esc(p.title)}">
-          <span class="color-tint" id="gallery-tint" aria-hidden="true"></span>
-        </div>
-        <div class="thumbs">
-          ${images.map((src, i) => `<button type="button" class="${src === initialImage ? "active" : ""}" data-thumb="${src}" aria-label="${ctx.esc(p.title)} ${i + 1}"><img src="${src}" alt="" loading="lazy"></button>`).join("")}
-        </div>
-      </div>
-      ${pdpInfoHTML()}`;
+    return { images, initialImage };
+  }
 
-    const reviews = productReviews(p);
-    const extra = document.getElementById("product-extra");
-    if (extra) {
-      extra.innerHTML = `<div class="container">
-        <section class="product-faq reveal" aria-labelledby="faq-heading">
-          <div class="section-head"><h2 id="faq-heading">${ctx.esc(ctx.t("faqs"))}</h2></div>
-          <div class="accordion faq-accordion">
-            ${(ctx.S.faqs || ctx.SET.faqs || []).map((faq) => `<details><summary>${ctx.esc(ctx.L(faq.q))}</summary><div class="acc-body"><p>${ctx.esc(ctx.L(faq.a))}</p></div></details>`).join("")}
-          </div>
-        </section>
-        <section class="product-reviews reveal" aria-labelledby="product-reviews-heading">
-          <div class="reviews-head">
-            <h2 id="product-reviews-heading">${ctx.esc(ctx.t("reviews"))} <span class="reviews-count">(${reviews.length})</span></h2>
-            <div class="reviews-meta">${[1, 2, 3, 4, 5].map((n) => `<span class="tp-star${n > Math.round(Number(productRating(p))) ? " off" : ""}" data-icon="star"></span>`).join("")} <strong>${productRating(p)}</strong> · ${ctx.esc(ctx.t("verifiedBuyer"))}</div>
-          </div>
-          <div class="review-grid">
-            ${reviews
-              .map(
-                (review) => `<article class="review-card">
-              <span class="review-avatar" style="background:${ctx.esc(review.color || "#2e7d6f")}">${ctx.esc((review.name || "R").slice(0, 1))}</span>
-              <div class="review-name">${ctx.esc(review.name)} ${review.verified ? `<i>${ctx.esc(ctx.t("verifiedBuyer"))}</i>` : ""}</div>
-              ${ctx.starsHTML(Number(review.rating) || 5)}
-              <div class="review-title">${ctx.esc(ctx.L(review.title))}</div>
-              <p class="review-body">${ctx.esc(ctx.L(review.body))}</p>
-            </article>`
-              )
-              .join("")}
-          </div>
-        </section>
-      </div>`;
-    }
+  /** The product page shell is a `page-*` custom element so no HTML string is parsed into it (CSP: no inline CSS). */
+  function ensureBlock(id) {
+    const existing = document.getElementById(id);
+    if (existing) return existing;
+    const host = document.createElement("page-block");
+    host.id = id;
+    (document.getElementById("product-root")?.parentElement || document.body).appendChild(host);
+    return host;
+  }
 
-    const related = document.getElementById("product-related");
-    if (related) {
-      const pool = ctx.PRODUCTS.filter(
-        (x) => x.handle !== p.handle && (x.collections || []).some((c) => (p.collections || []).includes(c))
-      );
-      const items = (pool.length ? pool : ctx.PRODUCTS.filter((x) => x.handle !== p.handle)).slice(0, 5);
-      related.innerHTML = `<div class="container"><section class="related reveal"><h2>${ctx.esc(ctx.t("related"))}</h2><div class="grid">${items.map(ctx.cardHTML).join("")}</div></section></div>`;
-    }
+  function renderRelated(p) {
+    const related = ensureBlock("product-related");
+    const pool = ctx.PRODUCTS.filter(
+      (x) => x.handle !== p.handle && (x.collections || []).some((c) => (p.collections || []).includes(c))
+    );
+    const items = (pool.length ? pool : ctx.PRODUCTS.filter((x) => x.handle !== p.handle)).slice(0, 5);
+    related.innerHTML = relatedHTML(ctx, items);
+    return related;
+  }
+
+  async function renderProduct() {
+    const handle = new URLSearchParams(location.search).get("handle");
+    const p = handle ? await loadProductByHandle(handle) : null;
+    if (!p) return showNotFound();
+
+    seedPdp(p);
+    ctx.applyProductSeo(p);
+    renderBreadcrumb(p);
+
+    const { images, initialImage } = galleryImages(p);
+    const root = ensureBlock("product-root");
+    root.innerHTML = galleryHTML(ctx, p, images, initialImage, pdpInfoHTML);
+
+    const extra = ensureBlock("product-extra");
+    extra.innerHTML = productExtraHTML(ctx, p, productReviews(p), productRating);
+
+    const related = renderRelated(p);
     ctx.hydrateIcons(root);
     ctx.hydrateIcons(extra);
     ctx.hydrateIcons(related);

@@ -54,6 +54,8 @@ const SHELL = [
   "assets/js/ui/storefront/08-product-card.js",
   "assets/js/ui/storefront/09-home.js",
   "assets/js/ui/storefront/10-home-sections.js",
+  "assets/js/ui/storefront/11a-product-mappers.js",
+  "assets/js/ui/storefront/11b-product-blocks.js",
   "assets/js/ui/storefront/11-product-page.js",
   "assets/js/ui/storefront/12a-checkout-markup.js",
   "assets/js/ui/storefront/12b-checkout-flow.js",

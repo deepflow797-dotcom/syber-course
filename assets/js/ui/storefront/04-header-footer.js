@@ -5,15 +5,51 @@ export function install(ctx) {
   Object.assign(ctx, { renderHeader, renderCustomerAccount, renderFooter });
   const NAV = (ctx.SET.navigation || []).filter((n) => n.visible !== false);
 
+  const currencyLabel = () => {
+    const lang = ctx.R.lang;
+    const ar = lang === "ar";
+    if (ctx.R.getCurrencyMode() === "old") return ar ? "قديمة" : "Ancienne";
+    return ar ? "جديدة" : "Nouvelle";
+  };
+
+  function otherLang(lang) {
+    return lang === "ar" ? "fr" : "ar";
+  }
+
+  function otherLangLabel(lang) {
+    return otherLang(lang) === "fr" ? "Français" : "العربية";
+  }
+
+  function flagFor(lang) {
+    return lang === "fr" ? "assets/img/flag-fr.svg" : "assets/img/flag-mr.svg";
+  }
+
+  function themeButtonLabel() {
+    return ctx.R.theme === "dark" ? ctx.t("light") : ctx.t("dark");
+  }
+
+  function themeButtonIcon() {
+    return ctx.R.theme === "dark" ? ctx.ICON.sun : ctx.ICON.moon;
+  }
+
+  function navItemHTML(n) {
+    const flame = n.flame ? '<span class="flame" data-icon="flame" aria-hidden="true"></span>' : "";
+    const sub = n.sub?.length
+      ? `<div class="nav-drop">${n.sub.map((s) => `<a href="${ctx.esc(ctx.R.safeHref(s.href))}">${ctx.esc(ctx.L(s.label))}</a>`).join("")}</div>`
+      : "";
+    return `
+            <div class="nav-item">
+              <a href="${ctx.esc(ctx.R.safeHref(n.href))}">${ctx.esc(ctx.L(n.label))}${flame}</a>
+              ${sub}
+            </div>`;
+  }
+
   function renderHeader() {
     const el = document.getElementById("site-header");
     if (!el) return;
     const lang = ctx.R.lang;
-    const other = lang === "ar" ? "fr" : "ar";
-    const otherLabel = other === "fr" ? "Français" : "العربية";
-    const currentFlag = lang === "fr" ? "assets/img/flag-fr.svg" : "assets/img/flag-mr.svg";
-    const currencyLabel = () =>
-      ctx.R.getCurrencyMode() === "old" ? (lang === "ar" ? "قديمة" : "Ancienne") : lang === "ar" ? "جديدة" : "Nouvelle";
+    const otherLabel = otherLangLabel(lang);
+    const currentFlag = flagFor(lang);
     const closed = !ctx.R.isStoreOpen();
     el.className = "site-header";
     el.innerHTML = `
@@ -35,7 +71,7 @@ export function install(ctx) {
               <button type="button" data-set-lang="ar"><img src="assets/img/flag-mr.svg" alt="" width="22" height="15"><span>العربية</span></button>
               <button type="button" data-set-lang="fr"><img src="assets/img/flag-fr.svg" alt="" width="22" height="15"><span>Français</span></button>
             </div>
-          </div><button class="icon-btn theme-btn" type="button" data-theme-toggle aria-label="${ctx.esc(ctx.R.theme === "dark" ? ctx.t("light") : ctx.t("dark"))}">${ctx.R.theme === "dark" ? ctx.ICON.sun : ctx.ICON.moon}</button>
+          </div><button class="icon-btn theme-btn" type="button" data-theme-toggle aria-label="${ctx.esc(themeButtonLabel())}">${themeButtonIcon()}</button>
           <a class="icon-btn" href="account.html" aria-label="${ctx.esc(ctx.t("account"))}">${ctx.ICON.user}</a>
           <a class="icon-btn" href="wishlist.html" aria-label="${ctx.esc(ctx.t("wishlist"))}">${ctx.ICON.heart}<span class="cart-count wish-count" hidden>0</span></a>
           <button class="icon-btn" type="button" data-open-cart aria-label="${ctx.esc(ctx.t("cart"))}">${ctx.ICON.bag}<span class="cart-count cart-count-n" hidden>0</span></button>
@@ -43,16 +79,15 @@ export function install(ctx) {
       </div>
       <nav class="main-nav" aria-label="Main">
         <div class="container nav-inner">
-          ${NAV.map(
-            (n) => `
-            <div class="nav-item">
-              <a href="${ctx.esc(ctx.R.safeHref(n.href))}">${ctx.esc(ctx.L(n.label))}${n.flame ? '<span class="flame" data-icon="flame" aria-hidden="true"></span>' : ""}</a>
-              ${n.sub?.length ? `<div class="nav-drop">${n.sub.map((s) => `<a href="${ctx.esc(ctx.R.safeHref(s.href))}">${ctx.esc(ctx.L(s.label))}</a>`).join("")}</div>` : ""}
-            </div>`
-          ).join("")}
+          ${NAV.map(navItemHTML).join("")}
         </div>
         <button class="nav-scroll" type="button" aria-label="${ctx.esc(ctx.t("seeAll"))}"><span data-icon="chevronRight" aria-hidden="true"></span></button>
       </nav>`;
+    wireHeader(el, otherLabel);
+    ctx.hydrateIcons(el);
+  }
+
+  function wireHeader(el, otherLabel) {
     const form = el.querySelector("#header-search");
     const input = form.querySelector("input");
     form.addEventListener("submit", (e) => {
@@ -103,8 +138,8 @@ export function install(ctx) {
       el.querySelector(".account-dropdown")?.classList.remove("open");
     });
     el.querySelector(".lang-current span")?.setAttribute("title", otherLabel);
-    ctx.hydrateIcons(el);
   }
+
   function renderCustomerAccount() {
     const root = document.getElementById("customer-account");
     if (!root) return;

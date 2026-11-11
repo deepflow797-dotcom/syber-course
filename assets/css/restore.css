@@ -1650,3 +1650,282 @@ html[dir="rtl"] .review-form .char-count {
 .required {
   color: #c0392b;
 }
+/* ==========================================================================================
+   Utility layer — the sanctioned way to style an element, because the CSP is `style-src 'self'`
+   (no `unsafe-inline`): inline `style` attributes and `<style>` blocks are blocked by the browser.
+   Every preset used by a template lives here, one class per set of declarations, so markup carries
+   intent instead of CSS. Data-driven values (colours, percentages) go into the custom properties
+   declared below and are written by assets/js/core/style-vars.js — CSSOM, which CSP allows.
+   ========================================================================================== */
+
+/* ---- box model ---- */
+.u-flex { display: flex; }
+.u-grid { display: grid; }
+.u-inline-block { display: inline-block; }
+.u-col { flex-direction: column; }
+.u-wrap { flex-wrap: wrap; }
+.u-items-center { align-items: center; }
+.u-items-end { align-items: flex-end; }
+.u-items-start { align-items: flex-start; }
+.u-justify-between { justify-content: space-between; }
+.u-justify-end { justify-content: flex-end; }
+.u-center { display: grid; place-items: center; }
+.u-center-row { display: flex; align-items: center; }
+.u-between-row { display: flex; align-items: center; justify-content: space-between; }
+.u-grow { flex: 1; }
+.u-grow-2 { flex: 2; }
+.u-basis-32 { flex-basis: 32px; }
+.u-basis-44 { flex-basis: 44px; }
+.u-span-full { grid-column: 1 / -1; }
+.u-span-2 { grid-column: span 2; }
+.u-grid-thumb { grid-template-columns: 65px 1fr 22px; }
+.u-gap-3 { gap: 3px; }
+.u-gap-5 { gap: 5px; }
+.u-gap-7 { gap: 7px; }
+.u-gap-8 { gap: 8px; }
+.u-gap-9 { gap: 9px; }
+.u-gap-10 { gap: 10px; }
+.u-gap-12 { gap: 12px; }
+.u-gap-15 { gap: 15px; }
+
+/* ---- spacing ---- */
+.u-mt-4 { margin-top: 4px; }
+.u-mt-8 { margin-top: 8px; }
+.u-mt-9 { margin-top: 9px; }
+.u-mt-10 { margin-top: 10px; }
+.u-mt-11 { margin-top: 11px; }
+.u-mt-12 { margin-top: 12px; }
+.u-mt-13 { margin-top: 13px; }
+.u-mt-14 { margin-top: 14px; }
+.u-mt-16 { margin-top: 16px; }
+.u-mt-24 { margin-top: 24px; }
+.u-mt-40 { margin-top: 40px; }
+.u-mb-4 { margin-bottom: 4px; }
+.u-mb-7 { margin-bottom: 7px; }
+.u-mb-8 { margin-bottom: 8px; }
+.u-mb-9 { margin-bottom: 9px; }
+.u-mb-10 { margin-bottom: 10px; }
+.u-mb-12 { margin-bottom: 12px; }
+.u-mb-14 { margin-bottom: 14px; }
+.u-my-6 { margin: 8px 0 6px; }
+.u-my-7 { margin: 9px 0 7px; }
+.u-ms-5 { margin-inline-start: 5px; }
+.u-p-6 { padding: 6px; }
+.u-p-7 { padding: 7px 9px; }
+.u-p-7x10 { padding: 7px 10px; }
+.u-py-9 { padding: 9px 0; }
+.u-p-10 { padding: 10px; }
+.u-p-11 { padding: 11px; }
+.u-p-18 { padding: 18px; }
+.u-p-24 { padding: 24px; }
+.u-px-2x6 { padding: 2px 6px; }
+.u-px-3x6 { padding: 3px 6px; }
+.u-pt-10 { padding-top: 10px; }
+.u-pb-50 { padding-bottom: 50px; }
+.u-ps-17 { padding-inline-start: 17px; }
+
+/* ---- typography ---- */
+.u-fs-8 { font-size: 8px; }
+.u-fs-9 { font-size: 9px; }
+.u-fs-10 { font-size: 10px; }
+.u-fs-11 { font-size: 11px; }
+.u-fs-12 { font-size: 12px; }
+.u-fs-21 { font-size: 21px; }
+.u-fs-22 { font-size: 22px; }
+.u-fs-28 { font-size: 28px; }
+.u-bold { font-weight: 700; }
+.u-black { font-weight: 800; }
+.u-lh-12 { line-height: 1.2; }
+.u-lh-16 { line-height: 1.6; }
+.u-lh-18 { line-height: 1.8; }
+.u-lh-19 { line-height: 1.9; }
+.u-ls-1 { letter-spacing: 0.1em; }
+.u-ls-12 { letter-spacing: 0.12em; }
+.u-text-end { text-align: end; }
+.u-nowrap { white-space: nowrap; }
+.u-ltr { direction: ltr; }
+.u-disc { list-style: disc; }
+
+/* ---- colour ---- */
+.u-muted { color: var(--muted); }
+.u-soft { color: var(--soft-muted); }
+.u-white { color: #fff; }
+.u-warn { color: #f5a623; }
+.u-note { color: #64748b; }
+.u-dim { color: rgba(255, 255, 255, 0.65); }
+.u-warm { color: #ffb38b; }
+.u-strike { text-decoration: line-through; color: var(--soft-muted); }
+.u-surface { background: var(--surface); }
+.u-surface-2 { background: var(--surface-2); }
+
+/* ---- borders / radii / sizes ---- */
+.u-border { border: 1px solid var(--border); }
+.u-border-top { border-top: 1px solid var(--border); }
+.u-border-bottom { border-bottom: 1px solid var(--border); }
+.u-dashed { border: 1px dashed rgba(255, 255, 255, 0.4); }
+.u-r-6 { border-radius: 6px; }
+.u-r-7 { border-radius: 7px; }
+.u-r-8 { border-radius: 8px; }
+.u-r-9 { border-radius: 9px; }
+.u-r-10 { border-radius: 10px; }
+.u-r-12 { border-radius: 12px; }
+.u-r-14 { border-radius: 14px; }
+.u-round { border-radius: 50%; }
+.u-clip { overflow: hidden; }
+.u-sq-8 { width: 8px; height: 8px; }
+.u-sq-32 { width: 32px; height: 32px; }
+.u-sq-36 { width: 36px; height: 36px; }
+.u-sq-44 { width: 44px; height: 44px; }
+.u-square-100 { width: 100px; height: 100px; }
+.u-full { width: 100%; height: 100%; }
+.u-fit-contain { max-width: 100%; max-height: 40px; object-fit: contain; }
+.u-fit-cover { object-fit: cover; }
+.u-h-28 { height: 28px; }
+.u-min-95 { min-width: 95px; }
+.u-min-130 { min-width: 130px; }
+.u-min-200 { min-width: 200px; }
+.u-min-210 { min-width: 210px; }
+.u-max-170 { max-width: 170px; }
+
+/* ---- data-driven values (written by core/style-vars.js) ---- */
+.u-tint { background: var(--sv-bg, var(--surface-2)); }
+.u-tint-text { color: var(--sv-fg, inherit); }
+.u-status-text { color: var(--status, inherit); }
+.u-bar-track { background: var(--soft-muted, #e2e8f0); border-radius: 4px; overflow: hidden; }
+.u-bar-fill { width: calc(var(--sv-w, 0) * 1%); height: 100%; background: var(--bar, var(--accent, #ff6400)); }
+.u-w-pct { width: calc(var(--sv-w, 0) * 1%); }
+.u-h-pct { height: calc(var(--sv-h, 0) * 1%); }
+.u-pay-rail { border-inline-start: 3px solid var(--pay, transparent); }
+.u-accent-bg { background: var(--accent, #ff6400); }
+
+/* ---- composites: repeated shapes, named by role ---- */
+.u-avatar-xs {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+}
+.u-avatar-sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+.u-avatar-lg {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ff6400, #a72396);
+}
+.u-chip-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  gap: 5px;
+  background: var(--surface-2);
+}
+.u-list-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.u-panel {
+  border-radius: 12px;
+  padding: 18px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  margin-top: 4px;
+}
+.u-note-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 11px;
+  margin-top: 13px;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.u-dashed-badge {
+  display: inline-block;
+  margin-top: 13px;
+  border: 1px dashed rgba(255, 255, 255, 0.4);
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+.u-hero-gradient {
+  background: linear-gradient(135deg, #15151d, #3b2235);
+  color: #fff;
+  border-radius: 14px;
+  padding: 24px;
+}
+.u-side-total {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 9px;
+  display: flex;
+  justify-content: space-between;
+}
+.u-overlay-badge {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* Consent banner (built in JS; was a `cssText` string before the CSP change). */
+.consent-banner {
+  position: fixed;
+  inset-inline: 12px;
+  bottom: 12px;
+  z-index: 9999;
+  max-width: 560px;
+  margin-inline: auto;
+  background: var(--card, #fff);
+  color: inherit;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+/* Print note of the merchant guide (was an inline style attribute). */
+.guide-print-note {
+  margin-top: 40px;
+  color: #64748b;
+}
+
+/* the select of the orders table: border colour comes from data-sv (status colour) */
+.u-status-border {
+  border: 1px solid var(--sv-fg, var(--border));
+}

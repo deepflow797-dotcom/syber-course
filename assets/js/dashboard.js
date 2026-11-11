@@ -7,6 +7,7 @@
    shared mutable state (e.g. ctx.state, ctx.session) from it. Install order matters and mirrors the
    original top-to-bottom order of the former monolith. See docs/ARCHITECTURE.md. */
 
+import { watchStyleVars } from "./ui/style-vars.js";
 import { install as s0 } from "./ui/dashboard/00-context.js";
 import { install as s1 } from "./ui/dashboard/01-auth-screens.js";
 import { install as s2 } from "./ui/dashboard/02-shell.js";
@@ -69,3 +70,4 @@ const _initDashboard = () => {
 };
 
 _initDashboard();
+watchStyleVars(); // CSP: data-driven values reach CSS custom properties, never a style attribute

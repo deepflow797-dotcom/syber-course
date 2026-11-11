@@ -3,6 +3,7 @@
    Restore storefront — front-end application (ES module)
    ========================================================================== */
 
+import { watchStyleVars } from "./ui/style-vars.js";
 import { install as s0 } from "./ui/storefront/00-context.js";
 import { install as s1 } from "./ui/storefront/01-utils.js";
 import { install as s2 } from "./ui/storefront/02-cart.js";
@@ -54,3 +55,4 @@ const _initStorefront = () => {
 };
 
 _initStorefront();
+watchStyleVars(); // CSP: data-driven values reach CSS custom properties, never a style attribute

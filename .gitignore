@@ -10,3 +10,11 @@ node_modules/
 restore-store.zip
 .vercel
 *.zip
+
+# Phase 5 working files (never committed, never shipped in release zips)
+.kilocode/
+PROGRESS.md
+reports/evidence/
+reports/tools/
+playwright-report/
+test-results/

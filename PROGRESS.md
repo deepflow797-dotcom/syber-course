@@ -14,9 +14,9 @@ Branch: `arena/58146d3d-syber-course`. Baseline: tag `v1.6.0-baseline` (commit `
 | P5 CSP without unsafe-inline (style-src) | ✅ done (0 inline styles, 0 violations on 11 pages, pixel-identical) | `p5-check.txt` (116/116), `p5-e2e.txt` (6), `p5-csp-audit.txt`, `p5-pixel-diff.txt`, `p5-print-check.txt`; commits `8d814da`…`ddaa043`; tag `p5-phase-5-done` |
 | P3 Images + Lighthouse | ✅ done (CLS 0.765 → 0.017, icons −54…76 %) | `p3-check.txt` (117/117), `p3-e2e.txt` (6), `p3-metrics-after.txt`, `p3-bytes.txt`; commits `cac63e9`, `5b41dd5`; tag `p5-phase-3-done` |
 | P4 Backup/import | ✅ done (versioned JSON, diff-before-apply, 1-click undo, 11 unit + 2 e2e) | `p4-check.txt` (128/128), `p4-e2e.txt` (8), `p4-summary.txt`; commit `c945a9d`; tag `p5-phase-4-done` |
-| P6 Delivery docs + doctor | ⬜ todo | |
-| P7 Dependencies + security | ⬜ todo | |
-| P8 Delivery + final report | ⬜ todo | |
+| P6 Delivery docs + doctor | ✅ done (`docs/HANDOVER.md` ar+en, `npm run doctor`, 3 new tests) | `p6-check.txt` (131/131), `p6-e2e.txt` (8), `p6-doctor.txt`; commit `65274f0`; tag `p5-phase-6-done` |
+| P7 Dependencies + security | ✅ done (DOMPurify 3.2.6 → 3.4.17, 3.3 floor guard, engines ≥20, audit 0) | `p7-check.txt` (133/133), `p7-e2e.txt` (8), `p7-audit.txt`; commit `cea962e`; tag `p5-phase-7-done` |
+| P8 Delivery + final report | ✅ done (v1.7.0, CHANGELOG, lockfile 1.5.3 → 1.7.0) | `p8-check.txt` (133/133), `p8-e2e.txt` (8), `p8-doctor.txt`, `p8-metrics.txt` |
 
 ## Environment notes
 
@@ -103,3 +103,49 @@ Notes (honest):
 **P6 delivery docs + doctor.** `docs/` has ARCHITECTURE/UPDATING/VERIFICATION/BACKUP; add the client-facing handover
 (what to edit, how to publish, how to restore) and a `scripts/doctor.mjs` that checks a fresh clone: node version, config
 built, required files present, CSP header == meta CSP, icons 8-bit, service worker shell list matching disk.
+
+## P6 — handover and doctor
+
+- `docs/HANDOVER.md` — Arabic first, English second: a table of *what to change where*, deployment steps, backup/restore,
+  a "when something breaks" list, and the evidence table. It is the document a merchant actually opens.
+- `npm run doctor` (`scripts/doctor.mjs`, dependency-free, read-only) — 9 sections, 40 checks, exit 1 only on things that
+  would break the store. It found a real hole on its first run: `guide.html` and `print.html` had **no `<meta>` CSP at
+  all**, which on GitHub Pages (no `_headers`) means no policy. Both pages now carry it, and the P5 guard was extended to
+  require a *matching* policy on every page instead of only checking for `unsafe-inline`.
+- 3 new tests (`tests/scripts.test.mjs`): doctor passes on this repo; doctor fails and names the page when a page loses its
+  policy (copied tree in a temp dir); the handover doc still answers the three merchant questions.
+
+## P7 — dependencies and sanitizer
+
+- **Real finding:** the vendored DOMPurify was **3.2.6** — the version with published mXSS bypasses — and it is the only
+  thing standing between merchant-authored HTML and the shopper's DOM. Replaced with upstream **3.4.17** (28 KB, license
+  banner intact, MPL-2.0/Apache-2.0 unchanged).
+- Three independent checks now keep it honest: `scripts/check-webp.mjs` enforces a **3.3 floor** read from the banner
+  (negative-tested: rewriting the banner to 3.2.6 exits 1), `tests/sanitizer.test.mjs` runs four mXSS-shaped payloads
+  through it in jsdom, and the same payloads were run in real Chromium — 0 leaked, `<b>ok</b><p>hi</p>` preserved.
+- `engines.node` `>=18` → `>=20` (CI already builds on 20; the docs claimed it while the manifest allowed 18).
+- `npm audit --audit-level=low`: **0 vulnerabilities**. Six majors behind on dev-only tooling (eslint 10, jsdom 31,
+  typescript 7, pglite 0.5, globals, prettier) — deliberately not jumped in a release phase: each needs its own green run.
+
+## P8 — release
+
+- `package.json` **1.6.0 → 1.7.0**; `package-lock.json` was still stamped **1.5.3** and is now 1.7.0 (`npm ci` re-verified).
+- `CHANGELOG.md` 1.7.0 entry: what changed per phase, plus a "Notes and residuals" section that states what was *not* done
+  (no Lighthouse package offline, no bundling, undo snapshot is per browser, 23 functions still in the 11–15 band).
+- Final gate on the release tree: `npm run check` exit 0 (133 unit tests, PostgreSQL/RLS suite green), `npm run test:e2e`
+  8 passed, `npm run doctor` READY (0 blocking, 1 expected warning for the empty Supabase URL in template form).
+
+Measured on the final tree (Chromium, cold cache, gzip):
+
+| Page | FCP | LCP | CLS | wire | raw |
+| --- | --- | --- | --- | --- | --- |
+| index | 648 ms | 1328 ms | 0.000 | 67 K | 593 K |
+| collection | 64 ms | 472 ms | 0.017 | 54 K | 583 K |
+| product | 376 ms | 376 ms | 0.000 | 47 K | 576 K |
+| checkout | 376 ms | 376 ms | 0.000 | 47 K | 576 K |
+| account | 60 ms | 420 ms | 0.000 | 47 K | 576 K |
+| blog | 356 ms | 996 ms | 0.000 | 49 K | 578 K |
+
+The `raw` column is why the number is worth quoting carefully: 576 K of JavaScript on disk is 43 K on the wire. The tool
+now prints both, because an earlier reading of "431 K of JS" was the uncompressed figure and overstated the page weight
+by an order of magnitude.

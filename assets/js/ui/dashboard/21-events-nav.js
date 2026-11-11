@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Event delegation (part 1)
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { applyLiveColor, handleField, handleDirectToggle, handleLines, resizeImage, handleUpload });
   ctx.editorKind = null;
@@ -154,7 +156,7 @@ export function install(ctx) {
           context.drawImage(image, 0, 0, canvas.width, canvas.height);
           resolve(canvas.toDataURL("image/webp", 0.82));
         };
-        image.src = reader.result;
+        image.src = /** @type {string} */ (reader.result);
       };
       reader.readAsDataURL(file);
     });

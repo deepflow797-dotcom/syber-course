@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Team
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { viewProfile, viewTeam, managerEditor, saveManager, changeOwnPasswordModal, saveOwnPassword });
 

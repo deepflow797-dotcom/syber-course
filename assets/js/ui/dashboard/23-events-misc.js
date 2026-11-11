@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Event delegation (part 3)
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   /** Debounced route refresh that restores the caret in the search box. */
   function scheduleSearchRender(id) {
@@ -72,7 +74,7 @@ export function install(ctx) {
       })
       .catch(() => {});
     window.addEventListener("restore:changed", (event) => {
-      if (event.detail?.source === "catalog" && ctx.tablesMode()) {
+      if (/** @type {CustomEvent} */ (event).detail?.source === "catalog" && ctx.tablesMode()) {
         ctx.syncCatalogModel();
         ctx.renderRoute();
       }
@@ -185,7 +187,7 @@ export function install(ctx) {
     if (count > ctx.lastOrderCount) {
       ctx.toast(ctx.dt("طلب جديد وصل من المتجر", "Nouvelle commande reçue"), "good");
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const AudioContext = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
         if (AudioContext) {
           const context = new AudioContext();
           const oscillator = context.createOscillator();

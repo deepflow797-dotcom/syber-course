@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Blog and pages
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { viewBlog, postEditor, viewPages, pageEditor, savePageEditor, faqEditor });
   function viewBlog() {

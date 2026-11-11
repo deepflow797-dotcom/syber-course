@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Storefront content and navigation
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { isoLocal, directImageEditor, viewContent, navEditor, saveNavEditor });
   function isoLocal(value) {

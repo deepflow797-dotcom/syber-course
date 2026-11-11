@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Publish, preview and draft lifecycle
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { openPublishModal, publishNow });
   function openPublishModal() {

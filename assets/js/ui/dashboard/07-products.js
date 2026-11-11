@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Products
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, {
     filteredProducts,
@@ -208,18 +210,18 @@ export function install(ctx) {
         wide: true,
         footer: ctx.editorFooter(!isNew, "delete-product-buffer"),
         onMount: (root) => {
-          root.querySelectorAll("[data-product-tab]").forEach((tab) =>
+          root.querySelectorAll("[data-product-tab]").forEach((node) => {
+            const tab = /** @type {HTMLElement} */ (node);
             tab.addEventListener("click", () => {
               root
                 .querySelectorAll("[data-product-tab]")
-                .forEach((item) => item.classList.toggle("active", item === tab));
-              root
-                .querySelectorAll("[data-product-panel]")
-                .forEach((panel) =>
-                  panel.classList.toggle("active", panel.dataset.productPanel === tab.dataset.productTab)
-                );
-            })
-          );
+                .forEach((item) => /** @type {HTMLElement} */ (item).classList.toggle("active", item === tab));
+              root.querySelectorAll("[data-product-panel]").forEach((node) => {
+                const panel = /** @type {HTMLElement} */ (node);
+                panel.classList.toggle("active", panel.dataset.productPanel === tab.dataset.productTab);
+              });
+            });
+          });
         }
       }
     );

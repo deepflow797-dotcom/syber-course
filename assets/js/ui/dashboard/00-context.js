@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → prelude
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, {
     syncCatalogModel,
@@ -30,8 +32,20 @@ export function install(ctx) {
       /[&<>"']/g,
       (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]
     );
-  const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  /**
+   * First match of a selector. Callers cast to the concrete element type they know
+   * (the dashboard only queries real elements), which is why this returns `any`.
+   * @param {string} selector
+   * @param {ParentNode} [root]
+   */
+  const $ = (selector, root = document) => /** @type {any} */ (root.querySelector(selector));
+  /**
+   * All matches of a selector, as a real array.
+   * @param {string} selector
+   * @param {ParentNode} [root]
+   * @returns {any[]}
+   */
+  const $$ = (selector, root = document) => /** @type {any} */ ([...root.querySelectorAll(selector)]);
   const digits = (value) => String(value ?? "").replace(/\D/g, "");
   const money = (value) => ctx.R.money(value);
   const L = (value) => ctx.R.L(value);
@@ -143,13 +157,17 @@ export function install(ctx) {
   const icon = (name) =>
     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ICONS.overview}</svg>`;
 
+  /**
+   * Shows the dashboard toast for 3.2 s. The hide timer is kept on the function object.
+   * @type {ToastFn}
+   */
   function toast(message, type = "") {
     const node = document.getElementById("dash-toast");
     if (!node) return;
     node.textContent = message;
     node.className = `toast show ${type}`;
-    clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => {
+    clearTimeout(/** @type {ToastFn} */ (toast).timer);
+    /** @type {ToastFn} */ (toast).timer = setTimeout(() => {
       node.className = "toast";
     }, 3200);
   }
@@ -226,13 +244,13 @@ export function install(ctx) {
   function updateCounts() {
     const count = newOrdersCount();
     $$("[data-nav-count='orders']").forEach((node) => {
-      node.textContent = count || "";
-      node.hidden = !count;
+      node.textContent = String(count || "");
+      /** @type {HTMLElement} */ (node).hidden = !count;
     });
-    const badge = $("[data-order-alert]");
+    const badge = /** @type {HTMLElement | null} */ ($("[data-order-alert]"));
     if (badge) {
       const unseen = Math.max(0, count - ctx.orderBadgeSeen);
-      badge.textContent = unseen || "";
+      badge.textContent = String(unseen || "");
       badge.hidden = !unseen;
     }
   }

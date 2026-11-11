@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Shared modal / field helpers
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, {
     openModal,
@@ -74,11 +76,27 @@ export function install(ctx) {
     return ctx.isoLocal(actual);
   }
 
+  /**
+   * @typedef {object} FieldOptions
+   * @property {string} [type]
+   * @property {unknown} [value]
+   * @property {string} [placeholder]
+   * @property {string} [hint]
+   * @property {number} [rows]
+   * @property {unknown[] | null} [options]
+   * @property {boolean} [disabled]
+   */
+
   /** Extra options for the three field renderers. */
   function fieldExtras(type, disabled, hint, placeholder, rows) {
     return { type, disabled, hint, placeholder, rows };
   }
 
+  /**
+   * @param {string} label
+   * @param {string} path
+   * @param {FieldOptions} [config]
+   */
   function field(
     label,
     path,

@@ -1,3 +1,4 @@
+// @ts-check
 /* dashboard.js → `[data-action]` handlers for settings routes (extracted verbatim from 22b-events-settings.js)
    Marketing, payments, cities, team, blog/pages, FAQ, reviews, audit, profile and owner settings.
    The former 107-branch switch is an action → handler map; each handler receives `{ ctx, node, event, index, id }`.
@@ -341,7 +342,8 @@ const CONTACT_FIELDS = new Set([
 /** Reads the allowlisted contact inputs of the profile panel into a settings patch. */
 function readContactPatch(ctx) {
   const patch = {};
-  document.querySelectorAll("[data-dash-panel='profile-contact'] [data-edit-path]").forEach((input) => {
+  document.querySelectorAll("[data-dash-panel='profile-contact'] [data-edit-path]").forEach((node) => {
+    const input = /** @type {HTMLInputElement} */ (node);
     const raw = String(input.dataset.editPath || "");
     if (!raw.startsWith("settings.")) return;
     const key = raw.slice("settings.".length);

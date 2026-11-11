@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Overview
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { statCard, viewOverview });
   function statCard(label, value, note, accent, iconName, trend = "") {

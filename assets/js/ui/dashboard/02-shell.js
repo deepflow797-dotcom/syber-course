@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Application shell
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { renderShell, renderRoute });
   const NAV_GROUPS = [

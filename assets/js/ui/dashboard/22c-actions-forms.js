@@ -1,3 +1,4 @@
+// @ts-check
 /* dashboard.js → `[data-action]` click handlers (extracted verbatim from 22-events-forms.js)
    The former 114-branch switch is now an action → handler map. Handlers receive one object:
    `{ ctx, node, event, index, id }`. Every handler keeps the exact behaviour of its former `case` block,

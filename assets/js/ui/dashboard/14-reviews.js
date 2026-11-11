@@ -1,6 +1,8 @@
+// @ts-check
 /* dashboard.js → Reviews
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
+/** @param {DashboardCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { viewReviews, reviewEditor, saveReviewEditor });
   function viewReviews() {
@@ -10,8 +12,9 @@ export function install(ctx) {
     const pending = allCustomer.filter((review) => review.status === "pending");
     const approved = allCustomer.filter((review) => review.status === "approved");
     const rejected = allCustomer.filter((review) => review.status === "rejected");
-    if (!viewReviews.refreshed) {
-      viewReviews.refreshed = true;
+    const view = /** @type {{ refreshed?: boolean }} */ (viewReviews);
+    if (!view.refreshed) {
+      view.refreshed = true;
       ctx.R.refreshReviews().catch(() => {});
     }
     const customerRow = (review, actions) => `<div class="list-row review-pending-row">

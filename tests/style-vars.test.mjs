@@ -4,6 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
+import { decodePng } from "../scripts/png-optimize.mjs";
 import { applyStyleVars, setChannel } from "../assets/js/ui/style-vars.js";
 
 function dom(body) {
@@ -84,4 +85,17 @@ test("no template ships a style attribute or a <style> block (CSP guard)", async
   };
   walk(root);
   assert.deepEqual(offenders, []);
+});
+
+test("PWA icons stay 8-bit and lossless (they are re-encoded from 16-bit by scripts/png-optimize.mjs)", async () => {
+  const fs = await import("node:fs");
+  const root = new URL("..", import.meta.url).pathname;
+  for (const name of ["pwa-192.png", "pwa-512.png", "apple-touch-icon.png"]) {
+    const file = `${root}assets/img/${name}`;
+    const buf = fs.readFileSync(file);
+    assert.equal(buf[24], 8, `${name} must be an 8-bit PNG`);
+    const image = decodePng(file);
+    assert.ok(image.width >= 180 && image.height >= 180, `${name} keeps its size`);
+    assert.equal(image.rgba.length, image.width * image.height * 4);
+  }
 });

@@ -37,16 +37,7 @@ export function install(ctx) {
     if (!customer) return [];
     const phone = ctx.normalizeDigits(customer.phone || "").slice(-8);
     const email = ctx.normalizeEmail(customer.email || "");
-    return getOrders().filter((order) => {
-      const orderPhone = ctx.normalizeDigits(order.customer?.phone || "").slice(-8);
-      const orderEmail = ctx.normalizeEmail(order.customer?.email || "");
-      return (
-        (customer.authId && order.customerAuthId === customer.authId) ||
-        (customer.id && order.customerId === customer.id) ||
-        (phone && orderPhone === phone) ||
-        (email && orderEmail === email)
-      );
-    });
+    return getOrders().filter((order) => isCustomerOrder(order, customer, { phone, email }));
   }
   /**
    * Place an order. REMOTE: validated server-side by the create-order Edge Function (prices/stock recomputed in SQL);
@@ -54,36 +45,47 @@ export function install(ctx) {
    * @param {import("../../../types/global.d.ts").Order} order
    * @returns {Promise<import("../../../types/global.d.ts").Order>}
    */
+  /** Calls the create-order edge function; throws when it does not return an order. */
+  async function secureOrder(order) {
+    const res = await fetch(ctx.remoteUrl(`/functions/v1/${ctx.CFG.createOrderFunction}`), {
+      method: "POST",
+      headers: { apikey: ctx.CFG.supabaseAnonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ order })
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (res.ok && payload?.ok && payload?.order) return payload.order;
+    const message = payload?.error || (res.status >= 500 ? "الخادم مشغول مؤقتًا" : "تعذر التحقق من الطلب");
+    throw new Error(message);
+  }
+
+  /** Stores a server-validated order and returns it. */
+  function storeValidatedOrder(remoteOrder) {
+    const next =
+      normalizeRemoteOrder({
+        id: remoteOrder.id,
+        data: remoteOrder,
+        status: remoteOrder.status,
+        created_at: remoteOrder.createdAt,
+        updated_at: remoteOrder.updatedAt
+      }) || remoteOrder;
+    next.serverValidated = true;
+    const orders = getOrders().filter((o) => o.id !== next.id);
+    orders.unshift(next);
+    saveOrders(orders);
+    return next;
+  }
+
+  /**
+   * Place an order. REMOTE: validated server-side by the create-order Edge Function (prices/stock recomputed in SQL);
+   * LOCAL demo only: stored in localStorage and flagged `serverValidated:false`.
+   */
   async function submitOrder(order) {
     if (!order) throw new Error("طلب غير صالح");
-    // Prefer server-side validation when an Edge Function is configured.
     if (ctx.REMOTE && ctx.CFG.createOrderFunction) {
       try {
-        const res = await fetch(ctx.remoteUrl(`/functions/v1/${ctx.CFG.createOrderFunction}`), {
-          method: "POST",
-          headers: { apikey: ctx.CFG.supabaseAnonKey, "Content-Type": "application/json" },
-          body: JSON.stringify({ order })
-        });
-        const payload = await res.json().catch(() => ({}));
-        if (res.ok && payload?.ok && payload?.order) {
-          const next =
-            normalizeRemoteOrder({
-              id: payload.order.id,
-              data: payload.order,
-              status: payload.order.status,
-              created_at: payload.order.createdAt,
-              updated_at: payload.order.updatedAt
-            }) || payload.order;
-          next.serverValidated = true;
-          const orders = getOrders().filter((o) => o.id !== next.id);
-          orders.unshift(next);
-          saveOrders(orders);
-          return next;
-        }
-        const message = payload?.error || (res.status >= 500 ? "الخادم مشغول مؤقتًا" : "تعذر التحقق من الطلب");
-        throw new Error(message);
+        return storeValidatedOrder(await secureOrder(order));
       } catch (error) {
-        if (ctx.REMOTE && ctx.CFG.requireServerOrders !== false) {
+        if (ctx.CFG.requireServerOrders !== false) {
           throw new Error(
             String(error?.message || "تعذر التحقق من الطلب") + " / Impossible de valider la commande. Réessayez."
           );
@@ -98,35 +100,60 @@ export function install(ctx) {
     return addOrder({ ...order, serverValidated: false, validationMode: "local-demo" }, { remote: false });
   }
 
+  /** True when the order belongs to the given customer (auth id, local id, phone or e-mail). */
+  function sameId(left, right) {
+    return Boolean(left) && left === right;
+  }
+
+  const lastDigits = (value) => ctx.normalizeDigits(value || "").slice(-8);
+
+  function isCustomerOrder(order, customer, contact) {
+    if (sameId(customer.authId, order.customerAuthId)) return true;
+    if (sameId(customer.id, order.customerId)) return true;
+    if (contact.phone && lastDigits(order.customer?.phone) === contact.phone) return true;
+    const orderEmail = ctx.normalizeEmail(order.customer?.email || "");
+    return Boolean(contact.email) && orderEmail === contact.email;
+  }
+
+  /** Auth/user id of the signed-in customer, when there is one. */
+  function customerAuthId() {
+    return ctx.customerAuth?.user?.id || ctx.currentCustomer?.authId || "";
+  }
+
+  /** Row payload written to the orders table (untrusted orders never get here). */
+  function orderRowPayload(next) {
+    return {
+      id: next.id,
+      data: next,
+      status: next.status || "new",
+      customer_id: next.customerAuthId || null,
+      created_at: next.createdAt || ctx.nowISO(),
+      updated_at: next.updatedAt
+    };
+  }
+
+  function pushOrderRow(next) {
+    ctx
+      .supa(`/rest/v1/${ctx.CFG.ordersTable}`, {
+        method: "POST",
+        body: JSON.stringify(orderRowPayload(next)),
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" }
+      })
+      .catch((error) => console.warn("Restore: remote order sync failed", error));
+  }
+
   function addOrder(order, options = {}) {
     if (!order || !order.id) throw new Error("طلب غير صالح");
     const next = { ...order, updatedAt: ctx.nowISO() };
-    if (ctx.currentCustomer) {
-      next.customerId = ctx.currentCustomer.id || "";
-      next.customerAuthId = ctx.customerAuth?.user?.id || ctx.currentCustomer.authId || "";
-    }
+    if (ctx.currentCustomer) next.customerAuthId = customerAuthId();
     const orders = getOrders();
     orders.unshift(next);
     saveOrders(orders);
     // Never insert untrusted client-priced orders into the remote database.
-    if (ctx.REMOTE && options.remote === true && options.trusted === true) {
-      ctx
-        .supa(`/rest/v1/${ctx.CFG.ordersTable}`, {
-          method: "POST",
-          body: JSON.stringify({
-            id: next.id,
-            data: next,
-            status: next.status || "new",
-            customer_id: next.customerAuthId || null,
-            created_at: next.createdAt || ctx.nowISO(),
-            updated_at: next.updatedAt
-          }),
-          headers: { Prefer: "resolution=merge-duplicates,return=minimal" }
-        })
-        .catch((error) => console.warn("Restore: remote order sync failed", error));
-    }
+    if (ctx.REMOTE && options.remote === true && options.trusted === true) pushOrderRow(next);
     return next;
   }
+
   function updateOrder(id, patch) {
     const orders = getOrders().map((order) =>
       order.id === id ? { ...order, ...patch, updatedAt: ctx.nowISO() } : order
@@ -152,34 +179,36 @@ export function install(ctx) {
   function normalizeRemoteOrder(row) {
     if (!row) return null;
     const data = row.data && typeof row.data === "object" ? ctx.clone(row.data) : {};
-    data.id = data.id || row.id;
-    data.status = data.status || row.status || "new";
-    data.createdAt = data.createdAt || row.created_at || ctx.nowISO();
-    data.updatedAt = data.updatedAt || row.updated_at || data.createdAt;
-    if (row.customer_id) data.customerAuthId = row.customer_id;
-    return data;
+    return {
+      ...data,
+      id: data.id || row.id,
+      status: firstValue(data.status, row.status, "new"),
+      createdAt: firstValue(data.createdAt, row.created_at, ctx.nowISO()),
+      updatedAt: firstValue(data.updatedAt, row.updated_at, data.createdAt || row.created_at || ctx.nowISO()),
+      customerAuthId: data.customerAuthId || row.customer_id || undefined
+    };
   }
-  async function refreshOrders() {
-    if (!ctx.REMOTE) return getOrders();
-    let rows = null;
-    try {
-      if (ctx.session?.mode === "supabase" && (await ctx.remoteSessionValid())) {
-        rows = await ctx.supa(`/rest/v1/${ctx.CFG.ordersTable}?select=*&order=created_at.desc&limit=1000`, {}, true);
-      } else if (ctx.customerAuth?.accessToken) {
-        if (ctx.customerTokenExpiring() && !(await ctx.refreshCustomerToken())) return getOrders();
-        const uidValue = ctx.customerAuth.user?.id;
-        if (!uidValue) return getOrders();
-        rows = await ctx.supa(
-          `/rest/v1/${ctx.CFG.ordersTable}?customer_id=eq.${encodeURIComponent(uidValue)}&select=*&order=created_at.desc&limit=300`
-        );
-      }
-    } catch (error) {
-      console.warn("Restore: order refresh failed", error);
-      return getOrders();
-    }
-    if (!Array.isArray(rows) || !rows.length) return getOrders();
-    const local = getOrders();
-    const map = new Map(local.map((order) => [order.id, order]));
+
+  /** First non-empty value of the candidates. */
+  function firstValue(...values) {
+    return values.find((value) => value != null && value !== "") ?? values[values.length - 1];
+  }
+  /** Rows visible to the current visitor: staff see all, customers see their own. */
+  async function orderRowsForVisitor() {
+    if (ctx.session?.mode === "supabase" && (await ctx.remoteSessionValid()))
+      return ctx.supa(`/rest/v1/${ctx.CFG.ordersTable}?select=*&order=created_at.desc&limit=1000`, {}, true);
+    if (!ctx.customerAuth?.accessToken) return null;
+    if (ctx.customerTokenExpiring() && !(await ctx.refreshCustomerToken())) return null;
+    const uidValue = ctx.customerAuth.user?.id;
+    if (!uidValue) return null;
+    return ctx.supa(
+      `/rest/v1/${ctx.CFG.ordersTable}?customer_id=eq.${encodeURIComponent(uidValue)}&select=*&order=created_at.desc&limit=300`
+    );
+  }
+
+  /** Merges remote rows into the local list, newest `updatedAt` wins. */
+  function mergeOrderRows(rows) {
+    const map = new Map(getOrders().map((order) => [order.id, order]));
     let changed = false;
     rows
       .map(normalizeRemoteOrder)
@@ -191,7 +220,21 @@ export function install(ctx) {
           changed = true;
         }
       });
-    if (changed) saveOrders([...map.values()]);
+    if (!changed) return;
+    saveOrders([...map.values()]);
+  }
+
+  async function refreshOrders() {
+    if (!ctx.REMOTE) return getOrders();
+    let rows = null;
+    try {
+      rows = await orderRowsForVisitor();
+    } catch (error) {
+      console.warn("Restore: order refresh failed", error);
+      return getOrders();
+    }
+    if (!Array.isArray(rows) || !rows.length) return getOrders();
+    mergeOrderRows(rows);
     return getOrders();
   }
 

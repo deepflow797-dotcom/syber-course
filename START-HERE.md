@@ -17,13 +17,15 @@ npm run serve    # ثم افتح http://127.0.0.1:8100
 
 ```bash
 npm run build    # يقرأ .env ويكتب assets/js/config.js
+npm run sql      # يبني supabase/ALL_IN_ONE.sql: المخطط + الترحيلات + كتالوج تجريبي، لصقة واحدة
 npm run doctor   # فحص 40 نقطة: ملفات ناقصة، CSP، أيقونات، Service Worker، النسخ الاحتياطي
 ```
 
 `npm run doctor` يجب أن ينتهي بـ **READY**. إن ظهر `FAIL` فالسطر نفسه يشرح ما ينقص.
 
-للربط بـ Supabase: انسخ `.env.example` إلى `.env`، ضع `SUPABASE_URL` و **مفتاح anon فقط**، ثم `npm run build`،
-ثم طبّق ملفات `supabase/migrations/` بالترتيب في SQL Editor.
+للربط بـ Supabase: انسخ `.env.example` إلى `.env`، ضع `SUPABASE_URL` و **مفتاح anon فقط**، ثم `npm run build`.
+للقاعدة: نفّذ `npm run sql` والصق `supabase/ALL_IN_ONE.sql` كاملًا في SQL Editor مرة واحدة — يشمل المخطط وكل الترحيلات
+والكتالوج التجريبي (21 منتجًا)، وتكراره آمن. مُختبَر على PostgreSQL 16 عبر `npm run test:db`.
 
 > **ممنوع:** مفتاح `service_role` في أي ملف يصل للمتصفح. `npm run doctor` يفشل إذا ظهر.
 

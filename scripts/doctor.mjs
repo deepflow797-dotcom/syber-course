@@ -183,7 +183,23 @@ if (fs.existsSync(manifestPath)) {
 if (fs.existsSync(P(".env")) || fs.existsSync(P(".env.local")))
   warn(".env present", "never commit real credentials; check .gitignore");
 
-/* ---------- 9. backup usability (P4) ---------- */
+/* ---------- 9. database bundle ---------- */
+section("Database");
+const allInOne = P("supabase/ALL_IN_ONE.sql");
+if (fs.existsSync(allInOne)) {
+  const sql = read(allInOne);
+  const sections = (sql.match(/-- ===== supabase\/migrations\//g) || []).length;
+  const seeded = sql.includes("-- ===== seed: demo catalog");
+  ok(
+    "supabase/ALL_IN_ONE.sql",
+    `${Math.round(sql.length / 1024)} KB, ${sections} migrations${seeded ? ", seeded" : ""}`
+  );
+  if (!seeded) warn("no demo catalog in ALL_IN_ONE.sql", "`npm ci` then `npm run sql` re-adds it");
+} else {
+  warn("supabase/ALL_IN_ONE.sql missing", "run `npm run sql` — the docs tell the merchant to paste that file");
+}
+
+/* ---------- 10. backup usability (P4) ---------- */
 section("Backup");
 const backupModule = P("assets/js/domain/backup-format.js");
 if (fs.existsSync(backupModule)) {

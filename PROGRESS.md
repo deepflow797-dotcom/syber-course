@@ -149,3 +149,22 @@ Measured on the final tree (Chromium, cold cache, gzip):
 The `raw` column is why the number is worth quoting carefully: 576 K of JavaScript on disk is 43 K on the wire. The tool
 now prints both, because an earlier reading of "431 K of JS" was the uncompressed figure and overstated the page weight
 by an order of magnitude.
+
+## Follow-up after delivery — the one-paste database file
+
+The question "is this the final result?" was worth asking: the ZIP was complete as *code*, but `README.md` told the
+merchant to paste `supabase/ALL_IN_ONE.sql` and **that file did not exist in the template** — `new-client` generates it
+per merchant folder, and the repo-level copy was never produced. Anyone following the README on a fresh clone would have
+been stuck at step one.
+
+- `scripts/build-sql.mjs` + **`npm run sql`** builds it for the repository itself: `schema.sql` + all 5 migrations + the
+  demo-catalog seed, in the same format `new-client` emits.
+- `tests/db/allinone.integration.mjs` proves it on an empty PostgreSQL 16 (PGlite): applies cleanly, seeds
+  **21 products / 38 variants / 11 collections**, and a **second paste is idempotent** (21 → 21 rows). Wired into
+  `npm run test:db`, so `npm run check` now covers it.
+- The file is **shipped in the repository and the ZIP** (113 KB), not gitignored — a merchant should not need `npm ci` and
+  a build step before they can create their database. `npm run doctor` reports it under a new "Database" section.
+- `START-HERE.md` and `docs/HANDOVER.md` (both languages) now document the step.
+
+Fresh-clone walkthrough, executed and verified: `npm ci` → `npm run check` exit 0 (133 tests) → `npm run test:e2e` 8/8 →
+`npm run doctor` READY → paste `ALL_IN_ONE.sql` → 21 products.

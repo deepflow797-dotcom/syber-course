@@ -20,6 +20,8 @@
 ## 2. النشر (Vercel أو GitHub Pages)
 
 1. `npm ci` ثم `npm run build` (يقرأ `.env` ويكتب `config.js` والـ manifest).
+   لقاعدة البيانات: `npm run sql` يبني `supabase/ALL_IN_ONE.sql` (المخطط + كل الترحيلات + كتالوج تجريبي)، الصقه كاملًا
+   في Supabase ▸ SQL Editor ▸ Run مرة واحدة؛ تكراره آمن.
 2. `npm run check` — يجب أن ينتهي بـ exit 0 قبل أي نشر.
 3. `npm run doctor` — يفحص المجلد قبل الرفع: ملفات ناقصة، سياسة CSP، أيقونات، Service Worker.
 4. ارفع المجلد كما هو. لا يوجد خطوة بناء على الخادم؛ الموقع ملفات ثابتة.
@@ -71,7 +73,8 @@ Supabase URL and **anon** key → `.env`, then `npm run build`. The `service_rol
 
 ## Deploy
 
-`npm ci` → `npm run build` → `npm run check` (must exit 0) → `npm run doctor` → upload the folder. Static hosting, no
+`npm ci` → `npm run build` → `npm run sql` (builds `supabase/ALL_IN_ONE.sql`, one paste for the database) → `npm run check`
+(must exit 0) → `npm run doctor` → upload the folder. Static hosting, no
 server build step. The CSP lives in three places that must match byte for byte — `vercel.json`, `_headers`, and a
 `<meta>` in every page (GitHub Pages ignores `_headers`, so the meta tag is the real policy there); `npm run lint` fails
 if they drift.

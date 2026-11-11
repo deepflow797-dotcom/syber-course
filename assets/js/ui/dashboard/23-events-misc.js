@@ -2,51 +2,64 @@
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see dashboard.js). */
 
 export function install(ctx) {
+  /** Debounced route refresh that restores the caret in the search box. */
+  function scheduleSearchRender(id) {
+    return () => {
+      ctx.renderRoute();
+      const next = ctx.$(`#${id}`);
+      if (!next) return;
+      next.focus();
+      next.setSelectionRange(next.value.length, next.value.length);
+    };
+  }
+
+  /** Restarts the search debounce timer; returns the typed value. */
+  function scheduleSearch(value, delay, after) {
+    clearTimeout(ctx.searchTimer);
+    ctx.searchTimer = setTimeout(after, delay);
+    return value;
+  }
+
+  /** Live preview of an image field while the owner types a URL. */
+  function previewImage(node) {
+    const preview = node.closest(".image-field")?.querySelector("img");
+    if (preview && node.type !== "file") preview.src = node.value || "assets/img/favicon.svg";
+  }
+
+  const INPUT_HANDLERS = [
+    {
+      match: (node) => node.id === "order-search",
+      run: (node) => {
+        ctx.searchTerm = scheduleSearch(node.value, 320, scheduleSearchRender("order-search"));
+      }
+    },
+    {
+      match: (node) => node.id === "product-search",
+      run: (node) => {
+        ctx.productSearch = scheduleSearch(node.value, 320, scheduleSearchRender("product-search"));
+      }
+    },
+    {
+      match: (node) => node.id === "dash-search",
+      run: (node) => {
+        ctx.searchTerm = scheduleSearch(node.value, 380, () => {
+          if (ctx.route === "orders" || ctx.route === "products") ctx.renderRoute();
+        });
+      }
+    },
+    {
+      match: (node) => node.matches("[data-edit-path]") || node.matches("[data-path]"),
+      run: (node) => {
+        ctx.handleField(node);
+        previewImage(node);
+      }
+    }
+  ];
+
   document.addEventListener("input", (event) => {
     const node = event.target;
-    if (node.id === "order-search") {
-      ctx.searchTerm = node.value;
-      clearTimeout(ctx.searchTimer);
-      ctx.searchTimer = setTimeout(() => {
-        ctx.renderRoute();
-        const next = ctx.$("#order-search");
-        if (next) {
-          next.focus();
-          next.setSelectionRange(next.value.length, next.value.length);
-        }
-      }, 320);
-      return;
-    }
-    if (node.id === "product-search") {
-      ctx.productSearch = node.value;
-      clearTimeout(ctx.searchTimer);
-      ctx.searchTimer = setTimeout(() => {
-        ctx.renderRoute();
-        const next = ctx.$("#product-search");
-        if (next) {
-          next.focus();
-          next.setSelectionRange(next.value.length, next.value.length);
-        }
-      }, 320);
-      return;
-    }
-    if (node.id === "dash-search") {
-      ctx.searchTerm = node.value;
-      clearTimeout(ctx.searchTimer);
-      ctx.searchTimer = setTimeout(() => {
-        if (ctx.route === "orders" || ctx.route === "products") ctx.renderRoute();
-      }, 380);
-      return;
-    }
-    if (node.matches("[data-edit-path]")) {
-      ctx.handleField(node);
-      const preview = node.closest(".image-field")?.querySelector("img");
-      if (preview && node.type !== "file") preview.src = node.value || "assets/img/favicon.svg";
-    } else if (node.matches("[data-path]")) {
-      ctx.handleField(node);
-      const preview = node.closest(".image-field")?.querySelector("img");
-      if (preview && node.type !== "file") preview.src = node.value || "assets/img/favicon.svg";
-    }
+    const handler = INPUT_HANDLERS.find((entry) => entry.match(node));
+    if (handler) handler.run(node);
   });
 
   if (ctx.CAT?.enabled) {
@@ -66,88 +79,89 @@ export function install(ctx) {
     });
   }
 
+  /** Uploads the manager avatar: resize → upload (or data URL fallback) → session + audit. */
+  async function updateAvatar(node) {
+    const file = node.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await ctx.R.resizeImage(file, 256, 0.85);
+      const publicUrl = await ctx.R.uploadMedia(dataUrl);
+      const url = publicUrl || dataUrl;
+      ctx.R.updateManager(ctx.session.id, { avatar: url });
+      ctx.model = ctx.clone(ctx.R.state);
+      ctx.session = ctx.R.currentSession();
+      localStorage.setItem("restore_session_v1", JSON.stringify(ctx.session));
+      ctx.R.addAudit(`${ctx.dt("تحديث الصورة الرمزية", "Avatar mis à jour")}`);
+      ctx.toast(ctx.dt("تم تحديث الصورة", "Image mise à jour"), "good");
+      ctx.renderRoute();
+    } catch (error) {
+      ctx.toast(error.message, "error");
+    }
+  }
+
+  const TOGGLE_SELECTOR =
+    "[data-page-section-visible], [data-home-section-visible], [data-product-active], [data-coupon-active], [data-payment-active], [data-city-active], [data-review-approved]";
+
+  /** Change handlers, tested in order; the first match consumes the event. */
+  const CHANGE_HANDLERS = [
+    { match: (node) => node.matches("[data-upload-path]"), run: (node) => ctx.handleUpload(node) },
+    { match: (node) => node.id === "profile-avatar-upload", run: (node) => updateAvatar(node) },
+    { match: (node) => node.matches("[data-lines-path]"), run: (node) => ctx.handleLines(node) },
+    {
+      match: (node) => node.matches("[data-currency-mode]"),
+      run: (node) => {
+        ctx.R.setCurrencyMode(node.value);
+        ctx.setPath(ctx.model, "settings.country.currencyMode", node.value);
+        ctx.saveDraftSoon();
+        ctx.toast(ctx.dt("تم تغيير العملة المعروضة", "Devise d’affichage modifiée"), "good");
+      }
+    },
+    {
+      match: (node) => node.dataset.blocklist != null,
+      run: (node) => {
+        ctx.model.settings.blocklist = node.value
+          .split("\n")
+          .map((line) => ctx.digits(line))
+          .filter(Boolean);
+        ctx.saveDraftSoon();
+      }
+    },
+    { match: (node) => node.matches(TOGGLE_SELECTOR), run: (node) => ctx.handleDirectToggle(node) },
+    { match: (node) => node.matches("[data-order-status]"), run: (node) => ctx.handleDirectToggle(node) },
+    {
+      match: (node) => node.matches("[data-product-filter]"),
+      run: (node) => {
+        if (node.dataset.productFilter === "category") ctx.productCategory = node.value;
+        if (node.dataset.productFilter === "stock") ctx.productStock = node.value;
+        ctx.saveDraftNow();
+        ctx.renderRoute();
+      }
+    },
+    { match: (node) => node.matches("[data-edit-path]"), run: (node) => ctx.handleField(node) },
+    { match: (node) => node.matches("[data-path]"), run: (node) => handlePathChange(node) }
+  ];
+
+  /** `[data-path]` fields also push collection visibility straight to the catalog tables. */
+  function handlePathChange(node) {
+    ctx.handleField(node);
+    const pathMatch = /^collections\.(\d+)\.visible$/.exec(node.dataset.path || "");
+    if (pathMatch && ctx.tablesMode()) {
+      const collection = ctx.model.collections[Number(pathMatch[1])];
+      if (collection) {
+        ctx.catalogWrite(ctx.dt("تم تحديث المجموعة", "Collection mise à jour"), () =>
+          ctx.CAT.saveCollection(collection)
+        );
+        return;
+      }
+    }
+    ctx.saveDraftNow();
+  }
+
   document.addEventListener("change", (event) => {
     const node = event.target;
-    if (node.matches("[data-upload-path]")) {
-      ctx.handleUpload(node);
-      return;
-    }
-    if (node.id === "profile-avatar-upload" && node.files?.[0]) {
-      const file = node.files[0];
-      (async () => {
-        try {
-          const dataUrl = await ctx.R.resizeImage(file, 256, 0.85);
-          const publicUrl = await ctx.R.uploadMedia(dataUrl);
-          const url = publicUrl || dataUrl;
-          ctx.R.updateManager(ctx.session.id, { avatar: url });
-          ctx.model = ctx.clone(ctx.R.state);
-          ctx.session = ctx.R.currentSession();
-          localStorage.setItem("restore_session_v1", JSON.stringify(ctx.session));
-          ctx.R.addAudit(`${ctx.dt("تحديث الصورة الرمزية", "Avatar mis à jour")}`);
-          ctx.toast(ctx.dt("تم تحديث الصورة", "Image mise à jour"), "good");
-          ctx.renderRoute();
-        } catch (error) {
-          ctx.toast(error.message, "error");
-        }
-      })();
-      return;
-    }
-    if (node.matches("[data-lines-path]")) {
-      ctx.handleLines(node);
-      return;
-    }
-    if (node.matches("[data-currency-mode]")) {
-      ctx.R.setCurrencyMode(node.value);
-      ctx.setPath(ctx.model, "settings.country.currencyMode", node.value);
-      ctx.saveDraftSoon();
-      ctx.toast(ctx.dt("تم تغيير العملة المعروضة", "Devise d’affichage modifiée"), "good");
-      return;
-    }
-    if (node.dataset.blocklist != null) {
-      ctx.model.settings.blocklist = node.value
-        .split("\n")
-        .map((line) => ctx.digits(line))
-        .filter(Boolean);
-      ctx.saveDraftSoon();
-      return;
-    }
-    if (
-      node.matches(
-        "[data-page-section-visible], [data-home-section-visible], [data-product-active], [data-coupon-active], [data-payment-active], [data-city-active], [data-review-approved]"
-      )
-    ) {
-      ctx.handleDirectToggle(node);
-      return;
-    }
-    if (node.matches("[data-order-status]")) {
-      ctx.handleDirectToggle(node);
-      return;
-    }
-    if (node.matches("[data-product-filter]")) {
-      if (node.dataset.productFilter === "category") ctx.productCategory = node.value;
-      if (node.dataset.productFilter === "stock") ctx.productStock = node.value;
-      ctx.saveDraftNow();
-      ctx.renderRoute();
-      return;
-    }
-    if (node.matches("[data-edit-path]")) {
-      ctx.handleField(node);
-      return;
-    }
-    if (node.matches("[data-path]")) {
-      ctx.handleField(node);
-      const pathMatch = /^collections\.(\d+)\.visible$/.exec(node.dataset.path || "");
-      if (pathMatch && ctx.tablesMode()) {
-        const col = ctx.model.collections[Number(pathMatch[1])];
-        if (col) {
-          ctx.catalogWrite(ctx.dt("تم تحديث المجموعة", "Collection mise à jour"), () => ctx.CAT.saveCollection(col));
-          return;
-        }
-      }
-      ctx.saveDraftNow();
-    }
+    const handler = CHANGE_HANDLERS.find((entry) => entry.match(node));
+    if (handler) handler.run(node);
   });
-
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && ctx.modalRoot.innerHTML) ctx.closeModal();
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {

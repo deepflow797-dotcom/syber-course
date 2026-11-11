@@ -2,12 +2,12 @@
 /* state.js → Default store state (settings tree, demo products, collections).
    Pure builders: no DOM access, no storage. `hydrate` in 01-default-content.js merges saved data over these. */
 
+import { createProductBuilders } from "./01b-default-products.js";
+
 /**
  * Builds the default state builders for one `ctx`.
  * @param {Record<string, any>} ctx shared state context
  */
-import { createProductBuilders } from "./01b-default-products.js";
-
 export function createDefaultState(ctx) {
   const products = createProductBuilders(ctx);
   const B = window.BRAND || {};

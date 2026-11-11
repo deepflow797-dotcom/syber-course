@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.7.0 — Phase 5: performance, backup/restore, handover
+
+Ten phases, each one verified before the next: baseline → complexity → types → CSP → images/Lighthouse → backup →
+handover → dependencies → release.
+
+- **CSP without `unsafe-inline` for styles (P5).** `style-src 'self'`: 122 static `style` attributes became utility
+  classes, 32 data-driven ones went through `data-sv` + `assets/js/ui/style-vars.js` (CSSOM, which the policy allows).
+  The print flow had to stop using `window.open("")` (opaque origin cannot load a stylesheet) and now prints from
+  `print.html`. `scripts/check-inline-styles.mjs` fails the build on any inline style, `cssText`, `<style>` block, or a
+  page whose `<meta>` CSP drifts from `vercel.json` — including a page with no policy at all (found by `npm run doctor`
+  on `guide.html`/`print.html`, which GitHub Pages served unprotected).
+- **Layout stability (P3).** The script-rendered shell reserves its measured height at three breakpoints:
+  CLS on `collection.html` **0.765 → 0.017**, every other page 0.000. Every storefront `<img>` carries true intrinsic
+  dimensions. The PWA icons were 16-bit PNGs of flat art and were re-encoded losslessly to 8 bits (−71 %, −54 %, −76 %),
+  verified byte-identical after decode; `scripts/png-optimize.mjs` does it, `scripts/check-webp.mjs` keeps it that way.
+  Measured (not claimed): FCP 68–652 ms, LCP 324–1396 ms, 48–68 KB transferred per page.
+- **Backup & restore (P4).** Dashboard ▸ Settings ▸ Advanced: download one versioned JSON file (settings, catalog,
+  sections, pages, blog, reviews) and import it back with a **diff shown before anything is written**, merge or replace,
+  and a one-click undo backed by a pre-import snapshot. Newer format versions are refused with a readable message instead
+  of corrupting the store. 11 unit tests on the pure format module + 2 Playwright round trips.
+- **Handover (P6).** `docs/HANDOVER.md` (Arabic + English): what to edit where, how to deploy, how to restore, what to do
+  when something breaks. `npm run doctor` checks a fresh clone or a new deployment: runtime, required files, config mode,
+  CSP parity on every page, inline styles, image dimensions, icon bit depth, service-worker shell vs disk, manifest icons,
+  backup availability.
+- **Dependency and sanitizer security (P7).** Vendored **DOMPurify 3.2.6 → 3.4.17**: 3.2.x carries published mXSS
+  bypasses, and this is the library standing between merchant HTML and the shopper's DOM. `npm run lint` now enforces a
+  **3.3 floor** from the library's own license banner, four mXSS-shaped payloads are regression-tested in jsdom and in real
+  Chromium, and `engines.node` is `>=20` to match CI. `npm audit`: 0 vulnerabilities.
+- **Numbers:** 64 → **133 unit tests**, 4 → **8 e2e** scenarios, 10 pages smoke-tested, PostgreSQL migration + RLS suite
+  still green. Complexity: the 40 frozen functions are ≤10 (ratchet baseline 0) and `complexity 15` is an error again.
+
+### Notes and residuals
+- `lighthouse` cannot be installed in the offline build environment, so P3 measured the same metrics (FCP, LCP, CLS,
+  transferred bytes) directly in Chromium over CDP, against `v1.6.0-baseline` in a separate git worktree. Numbers are in
+  `reports/evidence/p3-*`.
+- Remaining JS weight is the boot chain: 43 KB gzipped, 68–97 requests. Bundling the 92 modules is the next real
+  performance win and was deliberately left out of a phase that also rewrites CSP and storage.
+- The pre-import undo snapshot is per browser (`localStorage`), not per account.
+- 23 functions sit in the 11–15 complexity band (never frozen, pass the ≤15 rule); tightening them to ≤10 is a separate
+  task.
+
+
 ## 1.6.0 — Phase 4: quality gates (seed, e2e, 64 unit tests, typecheck, strict lint, Prettier)
 - **Fresh stores sell from the first minute**: `scripts/seed-catalog.mjs` boots the real storefront state in jsdom and
   maps it with the production mappers into an idempotent SQL seed (21 products, 38 variants, 11 collections, 2 coupons)

@@ -1,6 +1,6 @@
 {
   "name": "restore-store",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "type": "module",
   "description": "Static storefront + dashboard template (Supabase backend), brand-neutral, one isolated copy per merchant",

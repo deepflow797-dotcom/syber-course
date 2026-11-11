@@ -1,6 +1,8 @@
+// @ts-check
 /* app.js → Cart drawer
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
 
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { mountCart, openCart, closeCart, renderCart });
   function mountCart() {

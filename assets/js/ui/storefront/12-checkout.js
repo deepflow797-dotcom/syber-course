@@ -1,3 +1,4 @@
+// @ts-check
 /* app.js → Checkout
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js).
    The markup lives in 12a-checkout-markup.js and the pure rules in 12b-checkout-flow.js. */
@@ -15,6 +16,8 @@ import {
   whatsappNumber
 } from "./12b-checkout-flow.js";
 
+/** @param {StorefrontCtx} ctx */
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { renderCheckout });
 
@@ -41,6 +44,11 @@ export function install(ctx) {
 
     root.innerHTML = checkoutPageHTML(ctx, { items, subtotal, cities, payments, open, defaultCity, selectedPayment });
 
+    /**
+     * Typed `getElementById` for the checkout markup (inputs, cells, rows).
+     * @param {string} id
+     * @returns {any}
+     */
     const $ = (id) => document.getElementById(id);
     const digits = onlyDigits;
 
@@ -123,12 +131,13 @@ export function install(ctx) {
         refresh();
       })
     );
-    document.querySelectorAll('input[name="co-payment"]').forEach((radio) => {
+    document.querySelectorAll('input[name="co-payment"]').forEach((node) => {
+      const radio = /** @type {HTMLInputElement} */ (node);
       radio.addEventListener("change", () => {
         selectedPayment = payments.find((payment) => payment.id === radio.value) || payments[0];
         document
           .querySelectorAll(".payment-card")
-          .forEach((card) => card.classList.toggle("active", card.querySelector("input")?.checked));
+          .forEach((card) => card.classList.toggle("active", !!card.querySelector("input:checked")));
         refresh();
       });
     });

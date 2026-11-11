@@ -1,3 +1,4 @@
+// @ts-check
 /* app.js → Checkout business rules (pure functions, no DOM)
    Extracted verbatim from the place-order handler and the coupon/lead code of 12-checkout.js so the rules can be
    unit-tested without a browser. Nothing here touches `document`, `window` or storage: the caller passes values in
@@ -48,6 +49,10 @@ export function isRateLimited(phone, lastOrderAt, rateLimitSeconds, now = Date.n
 /**
  * Validates the typed checkout form against the store rules, in the same order as the original handler.
  * @returns {{ ok: boolean, code?: string, focus?: string, phone?: string }}
+ */
+/**
+ * Validates the checkout form before an order is created.
+ * @param {{ form: any, open: any, blocklist?: any, rateLimitSeconds?: any, lastOrderAt?: any, now?: any }} input
  */
 export function validateCheckout({ form, open, blocklist, rateLimitSeconds, lastOrderAt, now }) {
   if (!open) return { ok: false, code: "storeClosed" };

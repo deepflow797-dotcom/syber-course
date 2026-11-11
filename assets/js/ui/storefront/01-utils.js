@@ -1,6 +1,8 @@
+// @ts-check
 /* app.js → Utilities
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
 
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { hydrateIcons, toast });
   // Bilingual {ar,fr} objects (products created in the dashboard / loaded from the tables) are resolved to the
@@ -113,8 +115,9 @@ export function install(ctx) {
   };
 
   function hydrateIcons(root = document) {
-    root.querySelectorAll("[data-icon]").forEach((el) => {
-      const name = el.dataset.icon;
+    root.querySelectorAll("[data-icon]").forEach((node) => {
+      const el = /** @type {HTMLElement} */ (node);
+      const name = el.dataset.icon || "";
       if (ICON[name]) el.innerHTML = ICON[name];
     });
   }

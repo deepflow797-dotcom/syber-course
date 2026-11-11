@@ -1,3 +1,4 @@
+// @ts-check
 /* app.js → Product page markup blocks (extracted verbatim from renderProduct)
    Pure template builders: each takes the data it needs and returns an HTML string. No DOM access. */
 

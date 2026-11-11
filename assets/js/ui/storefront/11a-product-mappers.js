@@ -1,3 +1,4 @@
+// @ts-check
 /* app.js → Product page: repository row → storefront product (pure)
    Extracted verbatim from loadProductByHandle() in 11-product-page.js: no DOM, no network, unit-testable.
    Remote rows win over the local product; presentation-only fields (options, collections) always stay local. */

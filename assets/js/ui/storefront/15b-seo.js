@@ -1,9 +1,11 @@
+// @ts-check
 /* app.js → SEO helpers (meta tags, canonical, JSON-LD, theme-color)
    Extracted verbatim from 15-global-events.js so each function stays under the complexity budget and can be
    unit-tested against jsdom without booting the whole storefront. */
 // @ts-check
 
 /** @param {any} ctx Shared storefront context. */
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   function setMeta(attribute, key, content) {
     if (!content) return;

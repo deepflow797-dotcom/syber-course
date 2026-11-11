@@ -1,3 +1,4 @@
+// @ts-check
 /* app.js → Checkout markup builders (extracted verbatim from 12-checkout.js)
    Pure functions of the passed data: no DOM access, no event wiring, no side effects. Keeping the templates
    here lets 12-checkout.js stay under the complexity and size budgets, and lets tests render the markup in jsdom. */
@@ -85,7 +86,7 @@ export function checkoutPageHTML(ctx, data) {
       </div>`;
 }
 
-/** @param {any} ctx @param {any} data */
+/** @param {any} ctx */
 export function emptyCheckoutHTML(ctx) {
   return `<div class="container"><div class="empty-state"><h2>${ctx.esc(ctx.t("emptyCheckout"))}</h2><p>${ctx.esc(ctx.t("emptyCartText"))}</p><a class="btn btn-primary" href="collection.html?handle=all">${ctx.esc(ctx.t("shopNow"))}</a></div></div>`;
 }

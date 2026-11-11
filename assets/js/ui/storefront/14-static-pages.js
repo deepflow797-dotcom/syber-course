@@ -1,6 +1,8 @@
+// @ts-check
 /* app.js → Static pages
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
 
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { renderPage, renderBlog, renderBlogPost, renderAccount });
   function renderPage() {
@@ -150,12 +152,13 @@ export function install(ctx) {
         ${trackCard}
       </div>`;
 
-      root.querySelectorAll("[data-auth-tab]").forEach((button) => {
+      root.querySelectorAll("[data-auth-tab]").forEach((node) => {
+        const button = /** @type {HTMLElement} */ (node);
         button.addEventListener("click", () => {
           const tab = button.dataset.authTab;
           root.querySelectorAll("[data-auth-tab]").forEach((b) => b.classList.toggle("active", b === button));
-          root.querySelector("#login-form").hidden = tab !== "login";
-          root.querySelector("#register-form").hidden = tab !== "register";
+          /** @type {HTMLElement} */ (root.querySelector("#login-form")).hidden = tab !== "login";
+          /** @type {HTMLElement} */ (root.querySelector("#register-form")).hidden = tab !== "register";
 
           root.querySelector("#auth-error")?.remove();
         });
@@ -172,12 +175,12 @@ export function install(ctx) {
         box.textContent = message;
       };
 
-      root.querySelector("#login-form").addEventListener("submit", async (event) => {
+      /** @type {HTMLFormElement} */ (root.querySelector("#login-form")).addEventListener("submit", async (event) => {
         event.preventDefault();
-        const button = event.submitter;
+        const button = /** @type {HTMLButtonElement | undefined} */ (/** @type {SubmitEvent} */ (event).submitter);
         if (button) button.disabled = true;
-        const email = root.querySelector("#login-email").value;
-        const password = root.querySelector("#login-password").value;
+        const email = readValue("#login-email");
+        const password = readValue("#login-password");
         try {
           // Try admin login first (works with username or email)
           try {
@@ -208,12 +211,12 @@ export function install(ctx) {
 
       // Dashboard login handler
       root.querySelector("#dash-login-btn")?.addEventListener("click", async () => {
-        const button = root.querySelector("#dash-login-btn");
+        const button = /** @type {HTMLButtonElement} */ (root.querySelector("#dash-login-btn"));
         button.disabled = true;
         try {
           // Accept a username or a full e-mail address.
-          const identifier = root.querySelector("#dash-email").value.trim();
-          const password = root.querySelector("#dash-password").value;
+          const identifier = readValue("#dash-email").trim();
+          const password = readValue("#dash-password");
           await ctx.R.login(identifier, password);
           ctx.toast(ctx.t("signedIn") + " (" + ctx.t("dashboardLogin") + ")", "good");
           setTimeout(() => {
@@ -226,28 +229,31 @@ export function install(ctx) {
         }
       });
 
-      root.querySelector("#register-form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const button = event.submitter;
-        if (button) button.disabled = true;
-        try {
-          const wishlist = [...ctx.readWish()];
-          await ctx.R.customerRegister({
-            name: root.querySelector("#reg-name").value,
-            email: root.querySelector("#reg-email").value,
-            phone: root.querySelector("#reg-phone").value,
-            password: root.querySelector("#reg-password").value,
-            wishlist
-          });
-          ctx.toast(ctx.t("accountCreated"), "good");
-          ctx.renderCustomerAccount();
-          renderAccount();
-        } catch (error) {
-          showAuthError(error.message || ctx.t("registerFailed"));
-        } finally {
-          if (button) button.disabled = false;
+      /** @type {HTMLFormElement} */ (root.querySelector("#register-form")).addEventListener(
+        "submit",
+        async (event) => {
+          event.preventDefault();
+          const button = /** @type {HTMLButtonElement | undefined} */ (/** @type {SubmitEvent} */ (event).submitter);
+          if (button) button.disabled = true;
+          try {
+            const wishlist = [...ctx.readWish()];
+            await ctx.R.customerRegister({
+              name: readValue("#reg-name"),
+              email: readValue("#reg-email"),
+              phone: readValue("#reg-phone"),
+              password: readValue("#reg-password"),
+              wishlist
+            });
+            ctx.toast(ctx.t("accountCreated"), "good");
+            ctx.renderCustomerAccount();
+            renderAccount();
+          } catch (error) {
+            showAuthError(error.message || ctx.t("registerFailed"));
+          } finally {
+            if (button) button.disabled = false;
+          }
         }
-      });
+      );
     } else {
       const initial = String(cust.name || "U")
         .trim()
@@ -286,9 +292,16 @@ export function install(ctx) {
       });
     }
 
+    /**
+     * Value of an input of this panel.
+     * @param {string} selector
+     * @param {ParentNode} [scope]
+     */
+    const readValue = (selector, scope = root) => /** @type {HTMLInputElement} */ (scope.querySelector(selector)).value;
+
     const findOrder = () => {
-      const code = document.getElementById("acc-order").value.trim().toUpperCase();
-      const phone = document.getElementById("acc-phone").value.replace(/\D/g, "").slice(-8);
+      const code = readValue("#acc-order", document).trim().toUpperCase();
+      const phone = readValue("#acc-phone", document).replace(/\D/g, "").slice(-8);
       const found = orders.find(
         (order) =>
           (!code || order.id.toUpperCase() === code) &&

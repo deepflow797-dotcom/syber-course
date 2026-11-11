@@ -1,9 +1,12 @@
+// @ts-check
 /* app.js → Product page
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
 import { createProductsRepo } from "../../data/repositories/products.repo.js";
 import { mapRepoProduct } from "./11a-product-mappers.js";
 import { galleryHTML, productExtraHTML, productNotFoundHTML, relatedHTML } from "./11b-product-blocks.js";
 
+/** @param {StorefrontCtx} ctx */
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, {
     productSeed,

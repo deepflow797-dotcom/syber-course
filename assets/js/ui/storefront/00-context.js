@@ -1,6 +1,8 @@
+// @ts-check
 /* app.js → prelude
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
 
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   if (new URLSearchParams(location.search).get("preview") === "1") ctx.R.useDraft();
   const S = ctx.R.store;

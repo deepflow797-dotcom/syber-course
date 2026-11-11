@@ -1,3 +1,4 @@
+// @ts-check
 /* app.js → Storefront click handlers (extracted verbatim from 15-global-events.js)
    The document click listener is a lookup table: entries are tested in order and the first match wins.
    Entries flagged `passthrough: true` are side effects that must run on every click without consuming it.
@@ -78,9 +79,9 @@ function reviewError(ctx) {
 }
 
 function reviewDraft() {
-  const rating = Number(document.querySelector(".rating-input")?.dataset.rating || 0);
-  const title = document.getElementById("review-title")?.value.trim() || "";
-  const body = document.getElementById("review-body")?.value.trim() || "";
+  const rating = Number(/** @type {any} */ (document.querySelector(".rating-input"))?.dataset.rating || 0);
+  const title = /** @type {HTMLInputElement} */ (document.getElementById("review-title"))?.value.trim() || "";
+  const body = /** @type {HTMLTextAreaElement} */ (document.getElementById("review-body"))?.value.trim() || "";
   const handle = new URLSearchParams(location.search).get("handle");
   return { rating, title, body, handle };
 }
@@ -225,13 +226,14 @@ function paintTint(tint, colorHex, isFirstColor) {
 
 function paintGallery(ctx, name, value, colorHex) {
   if (!/color|colour/i.test(name)) return;
-  const main = document.getElementById("gallery-main-img");
+  const main = /** @type {HTMLImageElement} */ (document.getElementById("gallery-main-img"));
   const image = ctx.PDP.p.colorImages?.[value] || ctx.PDP.p.image;
   if (main && image) main.src = image;
   paintTint(document.getElementById("gallery-tint"), colorHex, ctx.PDP.p.colors?.[0]?.name === value);
-  document
-    .querySelectorAll("[data-thumb]")
-    .forEach((thumb) => thumb.classList.toggle("active", thumb.dataset.thumb === image));
+  document.querySelectorAll("[data-thumb]").forEach((node) => {
+    const thumb = /** @type {HTMLElement} */ (node);
+    thumb.classList.toggle("active", thumb.dataset.thumb === image);
+  });
 }
 
 function pickOption(ctx, e, el) {
@@ -272,11 +274,13 @@ function pickDot(ctx, e, dot) {
 }
 
 function pickThumb(ctx, e, thumb) {
-  const main = document.getElementById("gallery-main-img");
+  const main = /** @type {HTMLImageElement} */ (document.getElementById("gallery-main-img"));
   if (main) main.src = thumb.dataset.thumb;
   const tint = document.getElementById("gallery-tint");
   if (tint) tint.style.opacity = "0";
-  document.querySelectorAll("[data-thumb]").forEach((item) => item.classList.toggle("active", item === thumb));
+  document
+    .querySelectorAll("[data-thumb]")
+    .forEach((node) => /** @type {HTMLElement} */ (node).classList.toggle("active", node === thumb));
 }
 
 /** Builds the ordered click table for a storefront context. */
@@ -324,6 +328,8 @@ export function dispatchClick(handlers, event) {
   return false;
 }
 
+/** @param {StorefrontCtx} ctx */
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { clickHandlers: buildClickHandlers(ctx), dispatchClick });
 }

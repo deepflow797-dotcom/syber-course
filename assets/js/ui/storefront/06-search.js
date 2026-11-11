@@ -1,6 +1,8 @@
+// @ts-check
 /* app.js → Search
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
 
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { mountSearch, openSearch, closeSearch });
   function mountSearch() {
@@ -25,11 +27,13 @@ export function install(ctx) {
       if (e.target === overlay) closeSearch();
     });
     overlay.querySelector("[data-close-search]").addEventListener("click", closeSearch);
-    overlay.querySelector("#search-input").addEventListener("input", (e) => ctx.runSearch(e.target.value));
-    overlay.querySelector("#search-input").addEventListener("keydown", (e) => {
+    const searchInput = /** @type {HTMLInputElement} */ (overlay.querySelector("#search-input"));
+    searchInput.addEventListener("input", () => ctx.runSearch(searchInput.value));
+    searchInput.addEventListener("keydown", (event) => {
+      const e = /** @type {KeyboardEvent} */ (event);
       if (e.key === "Enter") {
         e.preventDefault();
-        const q = e.target.value.trim();
+        const q = searchInput.value.trim();
         if (!q) return;
         closeSearch();
         location.href = `collection.html?q=${encodeURIComponent(q)}`;
@@ -43,7 +47,7 @@ export function install(ctx) {
     const overlay = document.getElementById("search-overlay");
     overlay.classList.add("open");
     document.body.classList.add("no-scroll");
-    const input = document.getElementById("search-input");
+    const input = /** @type {HTMLInputElement} */ (document.getElementById("search-input"));
     input.value = q;
     setTimeout(() => input.focus(), 40);
     ctx.runSearch(q);

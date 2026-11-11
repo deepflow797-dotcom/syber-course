@@ -1,6 +1,8 @@
+// @ts-check
 /* app.js → Home
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
 
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { renderHome, setupHero, setupCategoryScroller, setupCountdowns, observeReveals });
   function renderHome() {
@@ -76,7 +78,8 @@ export function install(ctx) {
   }
 
   function setupCountdowns() {
-    const nodes = [...document.querySelectorAll("[data-countdown]")];
+    /** @type {HTMLElement[]} */
+    const nodes = [.../** @type {any} */ (document.querySelectorAll("[data-countdown]"))];
     if (!nodes.length) return;
     const tick = () => {
       nodes.forEach((node) => {
@@ -103,8 +106,8 @@ export function install(ctx) {
       });
     };
     tick();
-    clearInterval(window.__restoreCountdown);
-    window.__restoreCountdown = setInterval(tick, 1000);
+    clearInterval(/** @type {any} */ (window).__restoreCountdown);
+    /** @type {any} */ (window).__restoreCountdown = setInterval(tick, 1000);
   }
 
   ctx.revealObserver = undefined;

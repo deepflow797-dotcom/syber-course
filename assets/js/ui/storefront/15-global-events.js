@@ -1,14 +1,16 @@
+// @ts-check
 /* app.js → Global events
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js).
    The document click listener is a lookup table built in 15a-click-handlers.js; the SEO helpers live in
    15b-seo.js. This module keeps the remaining listeners (change/keydown/scroll/restore:*) and the consent gate. */
 
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   document.addEventListener("click", (e) => ctx.dispatchClick(ctx.clickHandlers, e));
   Object.assign(ctx, { consentState, setConsent, showConsentBanner, injectPixels });
 
   document.addEventListener("change", (event) => {
-    const spec = event.target.closest("[data-spec]");
+    const spec = /** @type {any} */ (event.target).closest("[data-spec]");
     if (spec) {
       ctx.PDP.specs[spec.dataset.spec] = spec.value;
       ctx.toast(ctx.R.lang === "ar" ? "تم حفظ خيار الطلب" : "Option enregistrée");
@@ -95,7 +97,7 @@ export function install(ctx) {
       <button type="button" class="btn btn-sm btn-soft" data-consent="denied">${ctx.esc(ar ? "رفض" : "Refuser")}</button>
       <button type="button" class="btn btn-sm btn-primary" data-consent="granted">${ctx.esc(ar ? "موافق" : "Accepter")}</button>`;
     box.addEventListener("click", (e) => {
-      const b = e.target.closest("[data-consent]");
+      const b = /** @type {any} */ (e.target).closest("[data-consent]");
       if (b) setConsent(b.dataset.consent);
     });
     document.body.appendChild(box);

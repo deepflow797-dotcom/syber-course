@@ -1,6 +1,8 @@
+// @ts-check
 /* app.js → Home sections
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
 
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, {
     heroHTML,
@@ -367,7 +369,7 @@ export function install(ctx) {
       sort.innerHTML = labels
         .map(([value, key]) => `<option value="${value}">${ctx.esc(ctx.t(key))}</option>`)
         .join("");
-      sort.value = COL.sort;
+      /** @type {HTMLSelectElement} */ (sort).value = COL.sort;
     }
     drawCollectionGrid();
     bindCollectionOnce();
@@ -402,8 +404,8 @@ export function install(ctx) {
   function bindCollectionOnce() {
     if (ctx.collectionBound) return;
     ctx.collectionBound = true;
-    document.getElementById("col-sort")?.addEventListener("change", (e) => {
-      COL.sort = e.target.value;
+    document.getElementById("col-sort")?.addEventListener("change", (event) => {
+      COL.sort = /** @type {HTMLSelectElement} */ (event.target).value;
       COL.shown = 10;
       drawCollectionGrid();
     });
@@ -411,7 +413,8 @@ export function install(ctx) {
       COL.shown += 10;
       drawCollectionGrid();
     });
-    document.addEventListener("click", (e) => {
+    document.addEventListener("click", (event) => {
+      const e = /** @type {any} */ (event);
       const b = e.target.closest("[data-brand]");
       if (b) {
         COL.brand = b.dataset.brand;

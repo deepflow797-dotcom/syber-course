@@ -1,6 +1,8 @@
+// @ts-check
 /* app.js → Header & footer
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
 
+/** @param {StorefrontCtx} ctx */
 export function install(ctx) {
   Object.assign(ctx, { renderHeader, renderCustomerAccount, renderFooter });
   const NAV = (ctx.SET.navigation || []).filter((n) => n.visible !== false);
@@ -231,7 +233,7 @@ export function install(ctx) {
           </div>
         </div>
       </footer>`;
-    const form = el.querySelector("#newsletter-form");
+    const form = /** @type {HTMLFormElement | null} */ (el.querySelector("#newsletter-form"));
     form?.addEventListener("submit", (event) => {
       event.preventDefault();
       ctx.toast(ctx.t("subscribed"));

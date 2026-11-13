@@ -28,7 +28,7 @@ export function checkoutPageHTML(ctx, data) {
               <div class="checkout-block-head"><span>2</span><h2>${ctx.esc(ctx.t("shippingDelivery"))}</h2></div>
               <div class="field-row">
                 <div class="field"><label for="co-city">${ctx.esc(ctx.t("city"))} *</label><select id="co-city">${cities.map((city) => `<option value="${ctx.esc(city.id)}" ${city.id === defaultCity?.id ? "selected" : ""}>${ctx.esc(ctx.L(city.name))} — ${Number(city.fee) ? ctx.money(city.fee) : ctx.t("free")}</option>`).join("")}</select></div>
-                <div class="field"><label>${ctx.esc(ctx.t("country"))}</label><div class="country-readonly"><img src="${ctx.SET.country.flag}" alt="" width="22" height="15">${ctx.esc(ctx.L(ctx.SET.country.name))}</div></div>
+                <div class="field"><label>${ctx.esc(ctx.t("country"))}</label><div class="country-readonly"><img src="${ctx.urlAttr(ctx.SET.country.flag)}" alt="" width="22" height="15">${ctx.esc(ctx.L(ctx.SET.country.name))}</div></div>
               </div>
               <div class="field"><label for="co-address">${ctx.esc(ctx.t("address"))} *</label><input id="co-address" autocomplete="street-address" placeholder="${ctx.esc(ctx.R.lang === "ar" ? "الحي، الشارع، رقم المنزل" : "Quartier, rue, numéro")}" required></div>
               <div class="field"><label for="co-notes">${ctx.esc(ctx.t("notes"))}</label><textarea id="co-notes" rows="3" placeholder="${ctx.esc(ctx.R.lang === "ar" ? "أي تفاصيل إضافية عن الطلب" : "Toute précision utile")}"></textarea></div>
@@ -64,7 +64,7 @@ export function checkoutPageHTML(ctx, data) {
               ${items
                 .map(
                   (it) => `<div class="sum-item">
-                <img src="${it.product.image}" alt="${ctx.esc(it.product.title)}" width="64" height="64" decoding="async">
+                <img src="${ctx.urlAttr(it.product.image)}" alt="${ctx.esc(it.product.title)}" width="64" height="64" decoding="async">
                 <div><div class="t">${ctx.esc(it.product.title)}</div><div class="p">${ctx.esc(ctx.variantLabel(it.variant))}${it.specs && Object.keys(it.specs).length ? ` · ${ctx.esc(ctx.specsText(it.specs))}` : ""} × ${it.qty}</div><strong>${ctx.money(it.line)}</strong></div>
               </div>`
                 )
@@ -109,7 +109,7 @@ export function checkoutSuccessHTML(ctx, data) {
             <div><span>${ctx.esc(ctx.t("total"))}</span><strong>${ctx.money(order.total)}</strong></div>
             <div><span>${ctx.esc(ctx.t("payment"))}</span><strong>${ctx.esc(payName)}</strong></div>
           </div>
-          <a class="btn btn-primary btn-whatsapp" id="open-whatsapp" href="${link}" target="_blank" rel="noopener">${ctx.ICON.whatsapp} ${ctx.esc(ctx.t("openWhatsApp"))}</a>
+          <a class="btn btn-primary btn-whatsapp" id="open-whatsapp" href="${ctx.urlAttr(link)}" target="_blank" rel="noopener">${ctx.ICON.whatsapp} ${ctx.esc(ctx.t("openWhatsApp"))}</a>
           <a class="btn btn-outline" href="collection.html?handle=all">${ctx.esc(ctx.t("backToShop"))}</a>
           <p class="redirecting">${ctx.esc(ctx.t("redirecting"))}</p>
         </div></div>`;

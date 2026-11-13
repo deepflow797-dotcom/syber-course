@@ -58,7 +58,7 @@ export function install(ctx) {
       <div class="announcement ${closed ? "is-closed" : ""} announce-slide"><span>${ctx.esc(closed ? ctx.t("storeClosed") : ctx.L(ctx.SET.announcement))}</span></div>
       <div class="container header-top">
         <button class="menu-btn" type="button" data-open-menu aria-label="${ctx.esc(ctx.t("menu"))}">${ctx.ICON.menu}</button>
-        <a class="logo" href="index.html" aria-label="${ctx.esc(ctx.L(ctx.SET.storeName))}"><img src="${ctx.SET.logo}" alt="${ctx.esc(ctx.L(ctx.SET.storeName))}" width="420" height="96" decoding="async"></a>
+        <a class="logo" href="index.html" aria-label="${ctx.esc(ctx.L(ctx.SET.storeName))}"><img src="${ctx.urlAttr(ctx.SET.logo)}" alt="${ctx.esc(ctx.L(ctx.SET.storeName))}" width="420" height="96" decoding="async"></a>
         <form class="search" id="header-search" role="search" autocomplete="off">
           <input type="search" placeholder="${ctx.esc(ctx.t("searchPlaceholder"))}" aria-label="${ctx.esc(ctx.t("search"))}">
           <button class="search-btn" type="submit" aria-label="${ctx.esc(ctx.t("search"))}">${ctx.ICON.search}</button>
@@ -67,7 +67,7 @@ export function install(ctx) {
           <div class="customer-account" id="customer-account"></div>
           <div class="lang-switch">
             <button class="lang-current" type="button" data-lang-toggle aria-label="${ctx.esc(ctx.t("language"))}">
-              <img src="${currentFlag}" alt="" width="20" height="14"><span>${lang.toUpperCase()}</span>${ctx.ICON.chevronDown}
+              <img src="${ctx.urlAttr(currentFlag)}" alt="" width="20" height="14"><span>${lang.toUpperCase()}</span>${ctx.ICON.chevronDown}
             </button>
             <div class="lang-menu">
               <button type="button" data-set-lang="ar"><img src="assets/img/flag-mr.svg" alt="" width="22" height="15"><span>العربية</span></button>
@@ -188,7 +188,7 @@ export function install(ctx) {
       <footer class="footer">
         <div class="container footer-main">
           <div>
-            <a class="logo" href="index.html" aria-label="${ctx.esc(ctx.L(ctx.SET.storeName))}"><img src="${ctx.SET.logoWhite}" alt="${ctx.esc(ctx.L(ctx.SET.storeName))}" width="420" height="96" decoding="async"></a>
+            <a class="logo" href="index.html" aria-label="${ctx.esc(ctx.L(ctx.SET.storeName))}"><img src="${ctx.urlAttr(ctx.SET.logoWhite)}" alt="${ctx.esc(ctx.L(ctx.SET.storeName))}" width="420" height="96" decoding="async"></a>
             <div class="footer-contact">
               <h4>${ctx.esc(ctx.t("contactUs"))}</h4>
               <div class="row"><span>${ctx.ICON.mapPin} ${ctx.esc(ctx.L(ctx.SET.address))}</span></div>

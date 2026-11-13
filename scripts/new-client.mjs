@@ -8,6 +8,7 @@ import path from "node:path";
 import readline from "node:readline/promises";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { copyTemplate, listTemplateFiles, deriveClientPackage, CLIENT_CI_YML } from "./lib/client-sync.mjs";
 
 const args = Object.fromEntries(
   process.argv
@@ -33,6 +34,7 @@ const city = await ask("city", "City (Arabic)", "نواكشوط");
 const color = await ask("color", "Primary colour (hex)", "#2563eb");
 const domain = await ask("domain", "Domain or subdomain (can be empty now)", `${key}.pages.dev`);
 const out = path.resolve(await ask("out", "Output folder", "../clients"));
+const repo = await ask("repo", "GitHub repo of this store for automatic updates (owner/name, can be empty)", "");
 rl.close();
 
 const src = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -41,17 +43,7 @@ if (fs.existsSync(dest)) {
   console.error(`✖ ${dest} already exists`);
   process.exit(1);
 }
-const skip = new Set(["node_modules", ".git", "clients", "Unselected files", ".vercel", "sbom.cdx.json"]);
-const copy = (a, b) => {
-  fs.mkdirSync(b, { recursive: true });
-  for (const e of fs.readdirSync(a, { withFileTypes: true })) {
-    if (skip.has(e.name)) continue;
-    const s = path.join(a, e.name),
-      d = path.join(b, e.name);
-    e.isDirectory() ? copy(s, d) : fs.copyFileSync(s, d);
-  }
-};
-copy(src, dest);
+copyTemplate(src, dest, { protect: false });
 const W = (f, c) => fs.writeFileSync(path.join(dest, f), c);
 const dial = "+" + phone.slice(0, 3);
 const phoneDisplay = `${dial} ${phone.slice(3).replace(/(\d{2})(?=\d)/g, "$1 ")}`;
@@ -80,21 +72,13 @@ W("assets/js/brand.config.js", brand);
 execSync(`node scripts/apply-brand.mjs "${dest}"`, { cwd: src, stdio: "inherit" });
 
 // 3. package.json name + version pin of the template this client was cut from
-const pkg = JSON.parse(fs.readFileSync(path.join(dest, "package.json"), "utf8"));
-pkg.name = `store-${key}`;
-pkg.description = `${fr} — online store`;
-pkg.templateVersion = pkg.version;
-pkg.client = { key, createdAt: new Date().toISOString().slice(0, 10) };
-// client repos have no Playwright suite (removed below): strip e2e from scripts and devDependencies
-for (const k of Object.keys(pkg.scripts))
-  pkg.scripts[k] = pkg.scripts[k]
-    .replace(/ e2e\b/g, "")
-    .replace(/ "e2e\/\*\*\/\*\.mjs"/g, "")
-    .replace(/ "\*\.mjs"/g, "");
-delete pkg.scripts["test:e2e"];
-delete pkg.scripts["test:e2e:install"];
-pkg.scripts["check:full"] = "npm run check && bash scripts/check-secrets.sh";
-delete pkg.devDependencies["@playwright/test"];
+const templatePkg = JSON.parse(fs.readFileSync(path.join(src, "package.json"), "utf8"));
+const pkg = deriveClientPackage(templatePkg, {
+  key,
+  fr,
+  createdAt: new Date().toISOString().slice(0, 10),
+  templateRepo: templatePkg.template?.repo
+});
 W("package.json", JSON.stringify(pkg, null, 2) + "\n");
 
 // 4. one-paste SQL for the merchant's own Supabase project
@@ -130,30 +114,45 @@ W(
   `# ${fr} — copy to .env.local (never commit). Public values only; service_role stays in Supabase → Edge Function secrets.\nSUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co\nSUPABASE_ANON_KEY=eyJ...\n# SUPABASE_SERVICE_ROLE_KEY=  <- only when deploying Edge Functions from this machine\n`
 );
 
-// 6. keep-alive (free Supabase projects pause after 7 idle days)
+// 6. automation (no secrets needed): keep-alive, weekly content backup, self-update from the template's releases
 fs.mkdirSync(path.join(dest, ".github/workflows"), { recursive: true });
+const automation = path.join(src, "automation/client");
+if (fs.existsSync(automation))
+  for (const f of fs.readdirSync(automation))
+    fs.copyFileSync(path.join(automation, f), path.join(dest, ".github/workflows", f));
+fs.rmSync(path.join(dest, "automation"), { recursive: true, force: true });
+fs.rmSync(path.join(dest, ".github/workflows/release.yml"), { force: true });
+// 6a. template-manifest.json: which files the template owns in this copy (lets a later update delete obsolete ones)
 W(
-  ".github/workflows/keepalive.yml",
-  `name: Keep Supabase awake\non:\n  schedule:\n    - cron: "17 6 */3 * *"   # every 3 days\n  workflow_dispatch:\npermissions: {}\njobs:\n  ping:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Light read through PostgREST (anon key is public by design)\n        run: |\n          test -n "\${{ secrets.SUPABASE_URL }}" || { echo "Set repo secrets SUPABASE_URL and SUPABASE_ANON_KEY"; exit 1; }\n          curl -fsS "\${{ secrets.SUPABASE_URL }}/rest/v1/restore_catalog_meta?select=id&limit=1" -H "apikey: \${{ secrets.SUPABASE_ANON_KEY }}" -H "Authorization: Bearer \${{ secrets.SUPABASE_ANON_KEY }}" > /dev/null && echo "awake"\n`
+  "template-manifest.json",
+  JSON.stringify(
+    { templateVersion: pkg.templateVersion, generatedAt: new Date().toISOString(), files: listTemplateFiles(src) },
+    null,
+    2
+  ) + "\n"
 );
+// 6b. register the store in the template's clients.json so a release pushes the update to it (push mode)
+if (repo) {
+  const cj = path.join(src, "clients.json");
+  const list = fs.existsSync(cj) ? JSON.parse(fs.readFileSync(cj, "utf8")) : { clients: [] };
+  if (!list.clients.some((c) => c.repo === repo)) {
+    list.clients.push({ repo, key });
+    fs.writeFileSync(cj, JSON.stringify(list, null, 2) + "\n");
+  }
+}
 
 // 5b. keep generated JS/JSON Prettier-clean so the client's own `npm run check` passes out of the box
 try {
   execSync(
-    `npx --no-install prettier --log-level warn --write "${path.join(dest, "assets/js/brand.config.js")}" "${path.join(dest, "package.json")}"`,
-    { cwd: src, stdio: "inherit" }
+    `node "${path.join(src, "node_modules/prettier/bin/prettier.cjs")}" --log-level warn --write assets/js/brand.config.js package.json`,
+    { cwd: dest, stdio: "inherit" } // run inside the client so its own .prettierrc / ignore files apply
   );
 } catch {
   console.warn("warning: prettier not installed in the template — run `npm run format` inside the client");
 }
 
-// 6b. lighter CI for the merchant repo (no Playwright/SBOM: a client repo only needs the fast guards)
-W(
-  ".github/workflows/ci.yml",
-  `name: CI\non:\n  push:\n    branches: [main, master]\n  pull_request:\npermissions:\n  contents: read\njobs:\n  check:\n    runs-on: ubuntu-latest\n    timeout-minutes: 10\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n          cache: npm\n      - run: npm ci\n      - run: npm run lint\n      - run: npm run lint:js\n      - run: npm run typecheck\n      - run: npm test\n      - run: npm run test:smoke\n      - name: Secret scan\n        run: |\n          ! grep -rnE "eyJ[A-Za-z0-9_-]{20,}\\.[A-Za-z0-9_-]{20,}\\.[A-Za-z0-9_-]{20,}" --include=*.js --include=*.mjs --include=*.json --include=*.html --exclude-dir=node_modules . || (echo "JWT-looking literal found" && exit 1)\n          ! grep -rn "service_role" assets/ --include=*.js || (echo "service_role must never appear in client code" && exit 1)\n`
-);
-fs.rmSync(path.join(dest, "e2e"), { recursive: true, force: true });
-fs.rmSync(path.join(dest, "playwright.config.mjs"), { force: true });
+// 6c. lighter CI for the merchant repo (no Playwright/SBOM: a client repo only needs the fast guards)
+W(".github/workflows/ci.yml", CLIENT_CI_YML);
 
 // 7. Cloudflare Pages / Netlify headers (same policy as vercel.json)
 const vercel = JSON.parse(fs.readFileSync(path.join(src, "vercel.json"), "utf8"));
@@ -207,7 +206,7 @@ Everything below is free. Nothing is shared with any other merchant.
 
 ## B. Hosting (free, commercial use allowed) — Cloudflare Pages (recommended) or GitHub Pages
 1. Create a **new private GitHub repo** for this merchant only, push this folder (\`git init && git add . && git commit -m "init" && git push\`).
-2. Repo → Settings → Secrets → add \`SUPABASE_URL\` and \`SUPABASE_ANON_KEY\` (for the keep-alive workflow).
+2. No repository secrets needed: keep-alive, weekly backup and self-update read the public URL/key from \`config.js\`.
 3. Cloudflare Pages → Create project → connect the repo → Framework: None, build command: *(empty)*, output dir: \`/\` → Deploy. URL: \`https://${key}.pages.dev\`.
    (GitHub Pages alternative: Settings → Pages → Deploy from branch → main / root.)
 4. Custom domain later: Pages → Custom domains → add → follow DNS instructions. Then set \`domain\` in \`assets/js/brand.config.js\`, run \`npm run brand\`, commit.
@@ -218,11 +217,17 @@ Everything below is free. Nothing is shared with any other merchant.
 - The demo catalog is already in the tables (seeded by ALL_IN_ONE.sql) — orders work from the first minute. Replace the demo products/images from the dashboard. (If you skipped the seed: Products → "نقل الكتالوج إلى الجداول" once.)
 - Settings → logo, colours, phone, WhatsApp, cities, payment methods.
 
+## C2. Automation (already in the repo — nothing to configure)
+- **Keep Supabase awake**: every 3 days (\`.github/workflows/keepalive.yml\`) — reads the public URL/key from \`config.js\`, no secrets.
+- **Weekly content backup**: Mondays → \`backups/content-YYYY-MM-DD.json\` committed to the repo (public catalog/pages/reviews; orders need \`docs/BACKUP.md\`).
+- **Self-update from the template**: daily check of the template's latest release (\`template-update.yml\`); protected files (\`config.js\`, \`brand.config.js\`, this file, licence, \`ALL_IN_ONE.sql\`, \`.env*\`, \`backups/\`) are never touched; the update is pushed only when \`npm run check\` passes, then the host redeploys. If the template repo is private, add secret \`TEMPLATE_TOKEN\` (fine-grained PAT, Contents: read) — or let the template push instead (its \`release.yml\` + \`clients.json\`).
+- New SQL migrations cannot be applied without the database password: the workflow opens a GitHub issue listing the files to paste into SQL Editor.
+
 ## D. Verify (5 minutes)
 - [ ] Storefront opens, no console errors; products visible.
 - [ ] Dashboard login works; add a product; it appears on the storefront after publish.
 - [ ] Place a test order on the storefront → appears in Dashboard → Orders.
-- [ ] Keep-alive workflow runs green (Actions → run manually once).
+- [ ] Actions → "Keep Supabase awake" → Run workflow → green. (Backup and update workflows run on their schedule.)
 `
 );
 

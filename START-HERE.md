@@ -1,13 +1,13 @@
-# ابدأ من هنا — حزمة المتجر 1.7.0
+# ابدأ من هنا — حزمة المتجر 1.8.0
 
-هذه حزمة **كاملة وجاهزة** لمتجر Restore بنسخة 1.7.0. الملف الذي بيدك هو المشروع كله، بدون `node_modules`
+هذه حزمة **كاملة وجاهزة** لمتجر Restore بنسخة 1.8.0. الملف الذي بيدك هو المشروع كله، بدون `node_modules`
 وبدون سجل git — أي أنه مشروع نظيف تمامًا يمكن وضعه في مستودع جديد أو رفعه للاستضافة مباشرة.
 
 ## 1. التشغيل محليًا (30 ثانية)
 
 ```bash
 npm ci          # تثبيت أدوات التطوير (مرة واحدة)
-npm run check    # كل الفحوصات: 133 اختبار وحدة + PostgreSQL + فحص كل الصفحات
+npm run check    # كل الفحوصات: 137 اختبار وحدة + PostgreSQL + فحص كل الصفحات
 npm run serve    # ثم افتح http://127.0.0.1:8100
 ```
 
@@ -51,7 +51,7 @@ npm run doctor   # فحص 40 نقطة: ملفات ناقصة، CSP، أيقون�
 
 | البوابة | النتيجة |
 | --- | --- |
-| `npm run check` | exit 0 — 133 اختبار وحدة + PostgreSQL/RLS + فحص كل الصفحات و18 مسار لوحة تحكم |
+| `npm run check` | exit 0 — 137 اختبار وحدة + PostgreSQL/RLS + فحص كل الصفحات و18 مسار لوحة تحكم |
 | `npm run test:e2e` | 8/8 سيناريوهات (شراء كامل، لوحة تحكم، نشر منتج، موافقة الكوكيز، نسخ احتياطي ذهابًا وإيابًا) |
 | `npm run doctor` | READY — 0 مشكلة حاجبة |
 | `npm audit` | 0 ثغرات |
@@ -64,3 +64,19 @@ npm run doctor   # فحص 40 نقطة: ملفات ناقصة، CSP، أيقون�
 المشروع؛ يمكن حذفه بأمان ولا يؤثر على شيء.
 
 سجل التغييرات الكامل: `CHANGELOG.md` · سجل المراحل والأدلة: `PROGRESS.md` و `reports/evidence/`.
+
+## 6. التشغيل الذاتي (جديد في 1.8.0)
+
+كل متجر يُولَّد بـ `npm run new-client -- ... --repo owner/name` يحمل ثلاثة مسارات GitHub لا تحتاج أي أسرار:
+إبقاء Supabase مستيقظاً كل 3 أيام، نسخة محتوى أسبوعية في `backups/`، وتحديث يومي من آخر إصدار للقالب
+(يُطبَّق ويُفحص بـ `npm run check` ولا يُدفع إلا إن نجح). ومن جهة القالب: `npm run release -- x.y.z` ثم
+`git push --tags` يدفع التحديث لكل المتاجر في `clients.json` (سرّ واحد `CLIENTS_TOKEN` في مستودع القالب).
+التفاصيل: `docs/AUTOMATION.md`.
+
+## 7. Windows
+
+يعمل القالب على Windows وLinux وmacOS بنفس الأوامر. على Windows:
+- استخدم Command Prompt أو PowerShell العاديين؛ لا حاجة لـ WSL أو Git Bash.
+- `npm run check` و`npm run check:full` و`npm run new-client` و`npm run release` كلها Node خالص (لا bash، لا python).
+- التحديث من GitHub (`update-from-template.mjs` في وضع السحب) يستخدم `tar` المدمج في Windows 10 وما بعده.
+- نهايات الأسطر مثبّتة على LF عبر `.gitattributes`؛ لا تغيّر `core.autocrlf`.

@@ -11,3 +11,6 @@ package-lock.json
 *.md
 *.html
 *.css
+
+# per-client, hand-edited by the merchant/installer — never a reason to fail a gate
+assets/js/config.js

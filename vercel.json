@@ -6,6 +6,23 @@
   "cleanUrls": false,
   "headers": [
     {
+      "source": "/backups/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "attachment"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
       "source": "/dashboard.html",
       "headers": [
         {

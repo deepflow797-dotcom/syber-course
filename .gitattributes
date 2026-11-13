@@ -1,0 +1,11 @@
+# One line ending everywhere: Prettier (format:check) expects LF, and the template is developed on Linux and
+# Windows alike. Git converts on checkout only if you override this — don't.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.zip binary

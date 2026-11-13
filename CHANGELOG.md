@@ -1,5 +1,117 @@
 # Changelog
 
+## 1.8.3 — security fixes from the audit of 1.8.2
+
+Five defects found by auditing 1.8.2 are fixed here; four have a regression test that fails on 1.8.2 and passes now.
+No merchant-facing feature changed; existing stores upgrade in place.
+
+- **Attribute injection through a merchant URL (high).** `04-header-footer.js` and 18 other sites wrote store data
+  straight into an HTML attribute (`<img src="${ctx.SET.logo}">`). A logo value of `x" data-pwned="1` closed the
+  attribute and added its own, so anyone able to save a URL (owner, or a compromised staff session) could deface the
+  storefront or swap a payment link. CSP does not mitigate this — the injected markup is same-origin HTML, not script.
+  Every external attribute now goes through `ctx.escAttr(...)` or `ctx.urlAttr(...)`, and `urlAttr` additionally
+  refuses `javascript:`, `vbscript:` and non-image `data:` URLs so a refused value renders as an empty `src`.
+  The scheme check normalises C0 control characters and spaces first: `java\tscript:`, `java\nscript:` and
+  `\u0000javascript:` are javascript: to a browser, and a naive prefix match on the raw string lets them through.
+  Both the unit test and the browser test carry those payloads.
+  A new guard, `node scripts/check-templates.mjs` (part of `npm run lint`), rejects an unescaped `${…}` inside an
+  attribute, so the class of bug cannot be reintroduced without failing CI.
+- **The weekly snapshot was published on the public site (high).** `content-backup.yml` ran `git add backups` and
+  pushed, and the host serves the repository root, so `https://<store>/backups/content-YYYY-MM-DD.json` was
+  downloadable. It contained catalogue, pages, links and approved reviews in a single file. The workflow now uploads
+  the snapshot as a workflow artifact (90-day retention) and never commits it; `backups/` is in `.gitignore`, blocked
+  in `_headers` and blocked by a `vercel.json` header rule for deployments that ignore `_headers`.
+- **An update wrote protected template files into a merchant store (medium).** `client-sync.mjs` skipped a protected
+  path only when the client already had it (`isProtected(rel) && fs.existsSync(dest)`), so a store without `.env`
+  received the template's `.env` — template-only credentials then looked like the store's own. Protected paths are
+  now always skipped, regardless of whether the destination exists.
+- **The template pointed at a repository it does not own, and the release workflow trusted a placeholder client
+  (medium).** `package.json.template.repo` was `Al-SAFWA/store-template` while this build lives in
+  `deepflow797-dotcom/syber-course`, so every generated store's `template-update.yml` pulled from a repository the
+  owner of this build may not control; it now names the real source. `clients.json` also carried a junk entry
+  (`x/cs`) that `release.yml` cloned with `CLIENTS_TOKEN` on every tag and pushed to directly; it is removed.
+- **`npm run build` ignored the `.env` the documentation tells the merchant to create (low, but a silent
+  demo-mode trap).** `build-config.mjs` read only `process.env`, so a correctly filled `.env` produced "no Supabase
+  environment variables set; keeping local demo configuration" and the store never connected. It now reads `.env`,
+  with real environment variables (Vercel/CI) still taking precedence, and says which source it used.
+
+Tests: 148 unit (142 + 6 regression in `tests/regression/audit-findings.test.mjs`), 9 e2e (8 + the browser proof
+`e2e/06-attribute-injection.spec.mjs`), smoke on 12 pages. `npm test` previously ran only `tests/*.test.mjs`; it now
+includes `tests/regression/` so the new tests are actually part of `npm run check`.
+
+## 1.8.2
+
+- tests/workflows.test.mjs no longer assumes automation/client exists (it is synced into stores too).
+
+## 1.8.1
+
+- Client CI: secret scan no longer trips on the public anon key or on warning comments.
+- template-update.yml was invalid YAML (daily self-update never ran); fixed and covered by tests/workflows.test.mjs.
+- GitHub Actions bumped to v5; Dependabot monthly, grouped, no major bumps.
+
+## 1.8.0 — Phase 6: merge of the two 1.7.0 lines + zero-touch operations
+
+Two independent Phase 5 implementations existed on top of 1.6.0. This release takes the **phase-8 line** (strict CSP
+without `style-src 'unsafe-inline'`, DOMPurify 3.4.17 with a 3.3 floor, 40 functions ≤10 complexity, 133 unit tests,
+diff-before-apply backup with undo, `print.html`, `docs/HANDOVER.md`, `npm run doctor`) as the base and ports the
+**operations layer** from the other line on top of it. The application code of the phase-8 line is unchanged.
+
+- **Zero-touch operations** (`docs/AUTOMATION.md`). Every generated store carries three workflows that need no secrets
+  (public URL/key are read from `config.js`): `keepalive.yml` (every 3 days, Supabase never pauses),
+  `content-backup.yml` (Mondays → `backups/content-YYYY-MM-DD.json`, last 12 kept), `template-update.yml` (daily: fetch
+  the template's latest GitHub release, apply, `npm run check`, push only if green → host redeploys).
+- **Template release in one command**: `npm run release -- x.y.z` (bump, CHANGELOG guard, `check:full`, commit, tag) →
+  `release.yml` on the tag creates the GitHub release and pushes the update to every store in `clients.json`
+  (one `CLIENTS_TOKEN` secret in the template repo). `scripts/update-from-template.mjs` works in pull mode (client
+  side) and push mode (`--from DIR`); plan / apply / report are separate, `--dry-run` prints the plan.
+- **One rulebook for new-client and update**: `scripts/lib/client-sync.mjs` (files never shipped to clients, files never
+  touched in a client — `config.js`, `brand.config.js`, `CLIENT.md`, licence, `ALL_IN_ONE.sql`, `.env*`, `backups/` —
+  manifest-based deletion of obsolete template files, client `package.json` derivation, client CI). 4 unit tests.
+  `new-client --repo owner/name` registers the store; `template-manifest.json` records the installed version.
+- Migrations that need the database password are never applied by a robot: the update opens a GitHub issue listing the
+  files to paste into SQL Editor.
+- **Numbers:** 142 unit tests, 8 e2e, smoke on all pages + 18 dashboard routes, PostgreSQL migration/RLS/fresh-store
+  suites green, `npm run doctor` READY. Verified end-to-end: new-client → client `npm run check` 137/137 →
+  simulated template 1.8.1 (changed file, deleted file, new migration) → update applied exactly, local `config.js`
+  edit preserved, second run "already up to date".
+
+- **Windows fixes** (found on the first run on a merchant laptop): `tests/style-vars.test.mjs` built paths with
+  `URL.pathname` (`C:\C:\...` on Windows) — now `fileURLToPath`; `npm run serve` and the Playwright web server use
+  `scripts/serve.mjs` (Node, serves `_headers` CSP, no Python dependency). The smoke runner passed its root directory with a trailing `\` to child processes, which on Windows escapes the closing quote and mangles the arguments — roots are now `path.resolve`d (`pages.smoke.mjs`, `helpers/boot.mjs`, `build-sql.mjs`). `scripts/check-secrets.sh` (bash) is replaced by
+  `scripts/check-secrets.mjs` (Node) so `check:full` and the pre-commit hook run on Windows; `.gitattributes` pins LF
+  so a Windows checkout with `autocrlf` cannot break `format:check`; Prettier is invoked through Node instead of a
+  `.bin` shim. The smoke child wrote its debug dump to `/dev/null`, which on Windows is a file named `null` that cannot be opened — the dump is now written only when `DUMP` is set. First run of the template CI on GitHub: the secret-scan step grepped the bare word `service_role` under `assets/` and failed on the two *warning comments* that tell people never to put that key there — it now fails only on an actual key/assignment (template CI and generated client CI).
+
+- **Dress rehearsal 1.5.2 → 1.8.0** (the real demo1 repository as it was deployed): three things broke and were
+  fixed. `release.yml` ran `scripts/update-from-template.mjs` from the *client's* tree, which an old client does not
+  have yet — it now runs the template's copy, fails the job (instead of staying green) when a client could not be
+  updated, and errors loudly when `CLIENTS_TOKEN` is missing. The merchant's hand-edited `config.js` is excluded from
+  `format:check` (`.prettierignore`). `ALL_IN_ONE.sql` is protected from a plain copy but is now rebuilt inside the
+  client (`build-sql.mjs`) so it carries every migration and the seed, and the DB test that asserts the seed passes.
+  Result: old demo1 → 1.8.0, client `npm run check` green, `config.js` untouched, 4 migrations reported.
+
+- **First live push to a client (demo1) surfaced two more things.** The `CLIENTS_TOKEN` PAT needs the **Workflows**
+  permission as well (GitHub refuses a push that adds `.github/workflows/*.yml` without it) — documented in
+  `docs/AUTOMATION.md`. The client CI's JWT scan now excludes `assets/js/config.js`: the anon key is a JWT on older
+  Supabase projects and is public by design. GitHub Actions bumped to `checkout@v5` / `setup-node@v5` /
+  `upload-artifact@v5` (Node 24 runners).
+
+- **First live push to a client (demo1) surfaced two more things.** The `CLIENTS_TOKEN` PAT needs the **Workflows** permission as well (GitHub refuses a push that adds `.github/workflows/*.yml` without it) — documented in
+  `docs/AUTOMATION.md`. The client CI's JWT scan now excludes `assets/js/config.js`: the anon key is a JWT on older
+  Supabase projects and is public by design. GitHub Actions bumped to `checkout@v5` / `setup-node@v5` /
+  `upload-artifact@v5` (Node 24 runners).
+
+- **`template-update.yml` was not valid YAML** (a multi-line `--body` string spilled to column 0): GitHub listed it
+  by file path and would never have run it — i.e. the daily self-update was silently dead on every client. Fixed; a
+  new `tests/workflows.test.mjs` checks every shipped workflow for this class of error. 142 unit tests.
+
+### Not carried over from the other 1.7.0 line (deliberately, to keep the merge safe)
+- `modulepreload` generation, svgo/sharp image pipeline and the Lighthouse gate (extra devDependencies; the phase-8 line
+  already measured FCP/LCP/CLS directly). Candidates for 1.9.
+- Its accessibility pass (aria labels on carousel dots, `inert` cart drawer, contrast tweaks) — scattered across 60 UI
+  files that the phase-8 line rewrote for CSP; to be re-applied on top of this code base.
+- Its own backup module (superseded by the phase-8 one with diff + undo).
+
 ## 1.7.0 — Phase 5: performance, backup/restore, handover
 
 Ten phases, each one verified before the next: baseline → complexity → types → CSP → images/Lighthouse → backup →

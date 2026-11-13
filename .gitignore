@@ -17,3 +17,6 @@ reports/evidence/
 reports/tools/
 playwright-report/
 test-results/
+
+# Weekly content snapshot — must never be published by the static host (audit finding #1)
+backups/

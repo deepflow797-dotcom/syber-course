@@ -1,6 +1,7 @@
 // @ts-check
 /* app.js → Utilities
    Extracted mechanically from the former monolith; shared state lives on `ctx` (see app.js). */
+import { escAttr as escAttrDom, urlAttr as urlAttrDom } from "../../core/dom.js";
 
 /** @param {StorefrontCtx} ctx */
 export function install(ctx) {
@@ -13,6 +14,12 @@ export function install(ctx) {
       /[&<>"']/g,
       (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
     );
+
+  // Attribute-safe helpers for templates that put a data value inside `attr="${…}"` (audit finding #2 in 1.8.2).
+  // escAttr = esc + no bilingual lookup surprises; urlAttr additionally rejects javascript:/vbscript:/html data URLs.
+  // Resolve bilingual {ar,fr} first, then escape exactly once (composing with esc() double-encoded &quot;).
+  const escAttr = (s) => escAttrDom(isBilingual(s) ? ctx.R.L(s) : s);
+  const urlAttr = (s) => urlAttrDom(isBilingual(s) ? ctx.R.L(s) : s);
 
   const money = (n) => ctx.R.money(n);
 
@@ -136,5 +143,16 @@ export function install(ctx) {
     clearTimeout(ctx.toastTimer);
     ctx.toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
   }
-  Object.assign(ctx, { esc, money, discountFor, variantLabel, SPEC_LABELS, specsText, svg, ICON });
+  Object.assign(ctx, {
+    esc,
+    escAttr,
+    urlAttr,
+    money,
+    discountFor,
+    variantLabel,
+    SPEC_LABELS,
+    specsText,
+    svg,
+    ICON
+  });
 }

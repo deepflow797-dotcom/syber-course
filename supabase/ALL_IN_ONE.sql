@@ -1,6 +1,6 @@
--- Restore store 1.7.0 — complete database setup.
+-- Restore store 1.8.2 — complete database setup.
 -- Paste the WHOLE file into Supabase → SQL Editor → Run (once, on an empty project).
--- Generated 2026-11-11T21:59:51.155Z from supabase/schema.sql, supabase/migrations/0002_relational.sql, supabase/migrations/0003_catalog_source_of_truth.sql, supabase/migrations/0004_catalog_atomic.sql, supabase/migrations/0005_fix_create_order_v2.sql, seed
+-- Generated 2026-11-13T22:02:53.301Z from supabase/schema.sql, supabase/migrations/0002_relational.sql, supabase/migrations/0003_catalog_source_of_truth.sql, supabase/migrations/0004_catalog_atomic.sql, supabase/migrations/0005_fix_create_order_v2.sql, seed
 -- Safe to re-run: migrations are idempotent and the seed does not duplicate rows or reset sold stock.
 
 -- ===== supabase/schema.sql =====

@@ -90,7 +90,7 @@ export function install(ctx) {
               .map(
                 (c) => `
               <a class="cat-card" href="collection.html?handle=${encodeURIComponent(c.handle)}">
-                <img src="${c.image}" alt="${ctx.esc(ctx.L(c.label))}" width="150" height="150" loading="lazy" decoding="async"><span>${ctx.esc(ctx.L(c.label))}</span>
+                <img src="${ctx.urlAttr(c.image)}" alt="${ctx.esc(ctx.L(c.label))}" width="150" height="150" loading="lazy" decoding="async"><span>${ctx.esc(ctx.L(c.label))}</span>
               </a>`
               )
               .join("")}
@@ -189,12 +189,12 @@ export function install(ctx) {
     }
   ];
   function sustainHTML() {
-    return `<section class="sustain reveal" aria-label="${ctx.R.lang === "ar" ? "الاستدامة" : "Durabilité"}">
+    return `<section class="sustain reveal" aria-label="${ctx.escAttr(ctx.R.lang === "ar" ? "الاستدامة" : "Durabilité")}">
       <div class="container">
         <div class="sustain-track">
           ${SUSTAIN_CARDS.map(
             (card) => `<article class="sustain-card sustain-${card.id}">
-            <span class="sustain-ico" data-icon="${card.icon}"></span>
+            <span class="sustain-ico" data-icon="${ctx.escAttr(card.icon)}"></span>
             <h3>${ctx.esc(ctx.L(card.title))}</h3>
             <p>${ctx.esc(ctx.L(card.text))}</p>
           </article>`
@@ -252,8 +252,8 @@ export function install(ctx) {
             .map(
               (
                 src
-              ) => `<a class="video-card" href="#" data-video aria-label="${ctx.R.lang === "ar" ? "قصة عميل" : "Témoignage client"}">
-            <img src="${src}" alt="" width="300" height="533" loading="lazy" decoding="async"><span class="play" data-icon="play" aria-hidden="true"></span>
+              ) => `<a class="video-card" href="#" data-video aria-label="${ctx.escAttr(ctx.R.lang === "ar" ? "قصة عميل" : "Témoignage client")}">
+            <img src="${ctx.urlAttr(src)}" alt="" width="300" height="533" loading="lazy" decoding="async"><span class="play" data-icon="play" aria-hidden="true"></span>
           </a>`
             )
             .join("")}

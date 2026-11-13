@@ -1,6 +1,7 @@
 /* CSP: data-driven styling. The browser ignores `style` attributes and `<style>` blocks under
    `style-src 'self'`, so dynamic values travel through `data-sv` and reach CSS custom properties via CSSOM.
    These tests pin the channel→property mapping and the parsing rules the templates depend on. */
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
@@ -66,7 +67,7 @@ test("applyStyleVars is a no-op on null / plain objects", () => {
 test("no template ships a style attribute or a <style> block (CSP guard)", async () => {
   const fs = await import("node:fs");
   const path = await import("node:path");
-  const root = new URL("..", import.meta.url).pathname;
+  const root = fileURLToPath(new URL("..", import.meta.url));
   const offenders = [];
   const walk = (dir) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -89,7 +90,7 @@ test("no template ships a style attribute or a <style> block (CSP guard)", async
 
 test("PWA icons stay 8-bit and lossless (they are re-encoded from 16-bit by scripts/png-optimize.mjs)", async () => {
   const fs = await import("node:fs");
-  const root = new URL("..", import.meta.url).pathname;
+  const root = fileURLToPath(new URL("..", import.meta.url));
   for (const name of ["pwa-192.png", "pwa-512.png", "apple-touch-icon.png"]) {
     const file = `${root}assets/img/${name}`;
     const buf = fs.readFileSync(file);

@@ -11,7 +11,7 @@ export default defineConfig({
   reporter: process.env.CI ? [["list"], ["html", { open: "never", outputFolder: "playwright-report" }]] : [["list"]],
   use: { baseURL: "http://127.0.0.1:8100", locale: "fr-FR", trace: "retain-on-failure", screenshot: "only-on-failure" },
   webServer: {
-    command: "python3 -m http.server 8100 --bind 127.0.0.1",
+    command: "node scripts/serve.mjs --port 8100 --host 127.0.0.1",
     url: "http://127.0.0.1:8100/index.html",
     reuseExistingServer: !process.env.CI,
     timeout: 20_000

@@ -6,7 +6,9 @@ import path from "node:path";
 import { JSDOM } from "jsdom";
 import { pathToFileURL, fileURLToPath } from "node:url";
 
-const ROOT = process.argv[2] || fileURLToPath(new URL("../../", import.meta.url));
+// path.resolve drops the trailing separator: a trailing backslash would escape the closing quote when
+// the path is passed as an argument to a child process on Windows (ROOT\" index.html → one mangled arg).
+const ROOT = path.resolve(process.argv[2] || fileURLToPath(new URL("../../", import.meta.url)));
 const PAGE = process.argv[3];
 const URL_ = process.argv[4] || "http://localhost:8100/?handle=iphone-13-pro-max&slug=about&";
 if (!PAGE) {
@@ -211,7 +213,7 @@ if (PAGE === "dashboard.html") {
   }
 }
 const body = w.document.body.innerHTML;
-fs.writeFileSync(process.env.DUMP || "/dev/null", body);
+if (process.env.DUMP) fs.writeFileSync(process.env.DUMP, body); // "/dev/null" is a real (unopenable) file name on Windows
 const fp = {
   page: PAGE,
   url: URL_,

@@ -52,3 +52,31 @@ dashboard **reviews** view crash in 1.2.x (`L is not defined`).
 `scripts/seed-catalog.mjs` is the only place the demo catalog becomes SQL; it reuses `bootStorefront()` (also used by
 `tests/helpers/boot.mjs`) and `domain/catalog-mappers.js`, so seed, tests and the dashboard import share one code path.
 Business logic stays in JS/SQL functions already covered by tests — the seed is plain `insert … on conflict do nothing`.
+
+## Template ↔ clients lifecycle (1.8.0)
+`scripts/lib/client-sync.mjs` defines what a client is relative to the template (skip list, protected files, package
+derivation, client CI). `new-client.mjs` uses it for the first cut, `update-from-template.mjs` for every release, so both
+paths cannot drift. Updates are unattended in both directions (`automation/client/*.yml` in clients, `release.yml` +
+`clients.json` in the template) — see `docs/AUTOMATION.md`.
+
+## Quality gates (1.6.0 → 1.7.0)
+
+| Gate | Command | What it proves |
+|---|---|---|
+| Architecture | `npm run lint` | ≤600 lines/file, layer boundaries, syntax, brand-neutral, no dangling asset refs |
+| ESLint strict | `npm run lint:js` | no-unused-vars, eqeqeq, no-var, prefer-const, max-depth 4, complexity 15 (legacy services/ui: warning + ratchet in `.complexity-baseline.json`) |
+| Format | `npm run format:check` | Prettier, printWidth 120, double quotes |
+| Types | `npm run typecheck` | `tsc` over `// @ts-check` modules (services, data, domain, core, assemblers) + `types/global.d.ts`; 0 `@ts-ignore` |
+| Unit | `npm test` | 64 tests: pricing, mappers, i18n parity, sanitizer, booted runtime (jsdom), tooling |
+| Smoke | `npm run test:smoke` | every page + 18 dashboard routes render in jsdom without errors |
+| Database | `npm run test:db` | migrations + RPC + RLS on PostgreSQL 16 (PGlite) and the **fresh-store scenario** (ALL_IN_ONE.sql incl. seed → first order OK → idempotent) |
+| E2E | `npm run test:e2e` | Playwright/Chromium against `scripts/serve.mjs` (real `_headers`/CSP): order flow, dashboard routes, product publish → storefront, i18n + consent, backup round-trip |
+| CSP | `npm run csp` / `csp:live` | `<meta>` CSP == `vercel.json` on all pages, no inline scripts; live: 0 `securitypolicyviolation` across pages + dashboard routes |
+| Generated code | `preload:check`, `images:check` | `modulepreload` tags and optimized images / `core/image-manifest.js` are up to date |
+| Lighthouse | `npm run lighthouse` | median of 3, mobile: perf ≥ 80, a11y / best-practices / SEO ≥ 95 (reports in `reports/`) |
+| Supply chain | `npm run audit:prod` | 0 high/critical in runtime deps (dev deps reported) |
+| Doctor | `npm run doctor` | one-screen health check of a clone / merchant copy |
+
+`scripts/seed-catalog.mjs` is the only place the demo catalog becomes SQL; it reuses `bootStorefront()` (also used by
+`tests/helpers/boot.mjs`) and `domain/catalog-mappers.js`, so seed, tests and the dashboard import share one code path.
+Business logic stays in JS/SQL functions already covered by tests — the seed is plain `insert … on conflict do nothing`.

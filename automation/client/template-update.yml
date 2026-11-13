@@ -1,0 +1,43 @@
+name: Update from template
+# Pull mode: this store checks the template's latest GitHub release and updates itself. Protected files
+# (config.js, brand.config.js, CLIENT.md, licence, ALL_IN_ONE.sql, .env*, backups/) are never touched.
+# The commit is pushed only when `npm run check` passes → Cloudflare Pages / Vercel deploy it automatically.
+# Private template repo → add repository (or organisation) secret TEMPLATE_TOKEN (fine-grained PAT, Contents: read).
+on:
+  schedule:
+    - cron: "23 4 * * *" # daily 04:23 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write
+concurrency: template-update
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+      - id: up
+        run: node scripts/update-from-template.mjs
+        env:
+          TEMPLATE_TOKEN: ${{ secrets.TEMPLATE_TOKEN }}
+      - name: Commit and push
+        if: steps.up.outputs.updated == 'true'
+        run: |
+          git config user.name "store-bot"
+          git config user.email "store-bot@users.noreply.github.com"
+          git add -A
+          git commit -m "template ${{ steps.up.outputs.previous }} → ${{ steps.up.outputs.version }}"
+          git push
+      - name: Open an issue when the database needs new migrations
+        if: steps.up.outputs.updated == 'true' && steps.up.outputs.migrations != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.up.outputs.version }}
+          MIGRATIONS: ${{ steps.up.outputs.migrations }}
+        run: |
+          body="The store code is now on template ${VERSION}. These SQL files are new and must be run once in Supabase → SQL Editor, in this order: ${MIGRATIONS}. Each file is idempotent. Until this is done, features depending on the new schema may not work."
+          gh issue create --title "Run database migrations for template ${VERSION}" --body "$body"

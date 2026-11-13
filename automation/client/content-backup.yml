@@ -1,0 +1,27 @@
+name: Weekly content backup
+on:
+  schedule:
+    - cron: "41 3 * * 1" # Mondays 03:41 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+      - run: node scripts/content-backup.mjs --keep 12 # anon API only — no secrets
+      # The snapshot is NOT committed: this repository is served by the static host, so a committed file is a
+      # public file (https://<store>/backups/content-YYYY-MM-DD.json). It is kept as a workflow artifact instead —
+      # downloadable by the repository owner only, kept for 90 days, and never published.
+      - name: Upload the snapshot as a private artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: content-backup-${{ github.run_number }}
+          path: backups/
+          retention-days: 90
+          if-no-files-found: warn

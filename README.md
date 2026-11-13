@@ -211,3 +211,7 @@ the dashboard.
 - **Architecture:** this is a static client app. Server-side validation (Edge Functions),
   strict RBAC, and atomic inventory/pricing are required for a high-trust production store.
 - The placeholder email is `hello@restore.mr`; update it with your real contact details.
+
+## Operations
+Stores keep themselves awake, backed up and up to date without manual work — see `docs/AUTOMATION.md`.
+`npm run release -- x.y.z` publishes a template release to every registered store.

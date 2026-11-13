@@ -79,10 +79,26 @@ test("new-client output contains no secrets and no template brand leaks", () => 
   assert.equal(brand.status, 0, brand.stderr);
   assert.ok(!fs.existsSync(path.join(dest, "node_modules")));
 });
-test("new-client output: _headers and keepalive workflow generated", () => {
+test("new-client output: _headers, zero-secret automation workflows, manifest", () => {
   assert.ok(read("_headers").includes("Content-Security-Policy"));
-  assert.ok(read(".github/workflows/keepalive.yml").includes("restore_catalog_meta"));
+  for (const wf of ["keepalive.yml", "content-backup.yml", "template-update.yml", "ci.yml"])
+    assert.ok(fs.existsSync(path.join(dest, ".github/workflows", wf)), wf);
+  assert.ok(!fs.existsSync(path.join(dest, ".github/workflows/release.yml")), "template-only workflow not copied");
+  assert.ok(!fs.existsSync(path.join(dest, "automation")));
+  assert.ok(!fs.existsSync(path.join(dest, "e2e")));
+  assert.ok(!fs.existsSync(path.join(dest, "clients.json")));
+  assert.ok(!read(".github/workflows/keepalive.yml").includes("secrets."), "keepalive needs no secrets");
+  assert.ok(read(".github/workflows/keepalive.yml").includes("scripts/keepalive.mjs"));
+  const manifest = JSON.parse(read("template-manifest.json"));
+  assert.equal(manifest.templateVersion, JSON.parse(read("package.json")).templateVersion);
+  assert.ok(manifest.files.includes("assets/js/app.js"));
+  assert.ok(!manifest.files.some((f) => f.startsWith("e2e/") || f === "clients.json"));
+  const pkg = JSON.parse(read("package.json"));
+  assert.equal(pkg.scripts.lighthouse, undefined);
+  assert.equal(pkg.devDependencies["@playwright/test"], undefined);
+  assert.ok(pkg.scripts["update:check"]);
   assert.ok(read("CLIENT.md").includes("ALL_IN_ONE.sql"));
+  assert.ok(read("CLIENT.md").includes("Self-update"));
 });
 test("check-brand FAILS when a banned brand string is present in a shopper-visible file", () => {
   const leak = fs.mkdtempSync(path.join(os.tmpdir(), "leak-"));
@@ -119,7 +135,6 @@ test("template vercel.json and template _headers also agree (apply-brand keeps t
   assert.equal(line.trim().slice("Content-Security-Policy:".length).trim(), vcsp);
 });
 test.after(() => fs.rmSync(out, { recursive: true, force: true }));
-
 /* ---------- P6: doctor + handover docs ---------- */
 
 test("doctor exits 0 on a ready repository", () => {

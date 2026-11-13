@@ -11,11 +11,11 @@ export function galleryHTML(ctx, p, images, initialImage, makeInfo) {
   return `
       <div class="gallery">
         <div class="gallery-main">
-          <img id="gallery-main-img" src="${initialImage}" alt="${ctx.esc(p.title)}" width="600" height="600" decoding="async">
+          <img id="gallery-main-img" src="${ctx.urlAttr(initialImage)}" alt="${ctx.esc(p.title)}" width="600" height="600" decoding="async">
           <span class="color-tint" id="gallery-tint" aria-hidden="true"></span>
         </div>
         <div class="thumbs">
-          ${images.map((src, i) => `<button type="button" class="${src === initialImage ? "active" : ""}" data-thumb="${src}" aria-label="${ctx.esc(p.title)} ${i + 1}"><img src="${src}" alt="" width="150" height="150" loading="lazy" decoding="async"></button>`).join("")}
+          ${images.map((src, i) => `<button type="button" class="${src === initialImage ? "active" : ""}" data-thumb="${ctx.urlAttr(src)}" aria-label="${ctx.esc(p.title)} ${i + 1}"><img src="${ctx.urlAttr(src)}" alt="" width="150" height="150" loading="lazy" decoding="async"></button>`).join("")}
         </div>
       </div>
       ${makeInfo()}`;

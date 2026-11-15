@@ -6,11 +6,13 @@
  *  تيليجرام المجانية (Bot API).
  *
  *  الخطوات المختصرة (التفصيل خطوة بخطوة في الملف README-ar.md):
+ *   0) جدول جديد؟ افتح https://sheets.new ثم الأوامر: الإضافات ← Apps Script،
+ *      الصق هذا الملف، وشغّل setupSheet لبناء الورقتين والعناوين وخانات الاختيار.
  *   1) الصق هذا الملف كاملاً في محرر Apps Script الملحق بالجدول
  *      (من الجدول: الإضافات ← Apps Script)، ثم اضغط حفظ.
  *   2) شغّل الدالة  saveSpreadsheetId  مرة واحدة من المحرر
  *      (تحفظ معرّف الجدول في Script Properties — ضروري لأن تطبيق الويب
- *       لا يرى الجدول المفتوح تلقائياً).
+ *       لا يرى الجدول المفتوح تلقائياً). ملاحظة: setupSheet تفعل ذلك تلقائياً.
  *   3) من: إعدادات المشروع ← خصائص السكربت، أضف:
  *        TELEGRAM_TOKEN    = التوكن من @BotFather
  *        TELEGRAM_CHAT_ID  = رقم محادثتك (يمكن أكثر من رقم، مفصولاً بفاصلة)
@@ -1778,7 +1780,220 @@ function todayKey() {
 }
 
 /* ==========================================================================
- * 15) أسماء عربية مختصرة (اختيارية) — نفس الدوال، تسهيلاً للاستخدام
+ * 15) تهيئة الجدول من الصفر (لمن لا يملك جدولاً بعد)
+ * ========================================================================== */
+
+/** عدد الصفوف التي نجهّزها بخانة اختيار وتنسيق مسبقاً */
+var SETUP_ROWS = 1000;
+
+/**
+ * 🧱 تنشئ ورقتَي «المتابعة» و«السنوية» بالعناوين والتنسيق وخانات الاختيار.
+ * طريقة الاستخدام:
+ *   1) افتح https://sheets.new ثم سمِّ الملف (مثال: تذكير الضرائب).
+ *   2) من القائمة: الإضافات ← Apps Script ← الصق هذا الملف ← حفظ.
+ *   3) اختر الدالة setupSheet ثم Run.
+ * آمنة للتشغيل أكثر من مرة: لا تحذف بياناتك ولا تكتب فوق العناوين الموجودة.
+ */
+function setupSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error("افتح جدول Google Sheets أولاً، ثم: الإضافات ← Apps Script ← شغّل setupSheet.");
+  }
+
+  // نحفظ معرّف الجدول حتى يعمل تطبيق الويب والويب هوك لاحقاً
+  if (!getProp_(P_SHEET)) setProp_(P_SHEET, ss.getId());
+
+  var report = [];
+  report.push("📄 الجدول: " + ss.getName());
+  report = report.concat(
+    setupOneSheet_(
+      ss,
+      SHEET_MONTHLY,
+      ["الوحدة", "الشقة", "الوصل", "تاريخ الاستحقاق", "المبلغ", "مدفوع"],
+      { dateCol: M_DUE, amountCol: M_AMOUNT, paidCol: M_PAID, widths: [80, 80, 80, 140, 120, 80] },
+      0
+    )
+  );
+  report = report.concat(
+    setupOneSheet_(
+      ss,
+      SHEET_ANNUAL,
+      ["الوحدة", "تاريخ الاستحقاق", "المبلغ", "مدفوع"],
+      { dateCol: A_DUE, amountCol: A_AMOUNT, paidCol: A_PAID, widths: [160, 140, 120, 80] },
+      1
+    )
+  );
+
+  // تنبيه لطيف عن أوراق فارغة أخرى (مثل «ورقة1» في الجدول الجديد)
+  var others = [];
+  try {
+    ss.getSheets().forEach(function (sh) {
+      var nm = sh.getName();
+      if (nm === SHEET_MONTHLY || nm === SHEET_ANNUAL) return;
+      if (sh.getLastRow() <= 1) others.push(nm);
+    });
+  } catch (err) {
+    others = [];
+  }
+  if (others.length) {
+    report.push("💡 يمكنك حذف الورقة الفارغة غير المستخدمة: " + others.join("، "));
+  }
+
+  report.push("");
+  report.push("✅ الجدول جاهز. الخطوات التالية: BotFather ← الخصائص ← النشر ← setWebhook.");
+  report.push("💡 لتجربة سريعة: شغّل addSampleData لإضافة صفوف تجريبية ثم sendTestReminder.");
+
+  var text = report.join("\n");
+  Logger.log("\n" + text);
+  return text;
+}
+
+/** تجهيز ورقة واحدة (تُستدعى من setupSheet) */
+function setupOneSheet_(ss, name, headers, cols, index) {
+  var report = [];
+  var sheet = ss.getSheetByName(name);
+  var created = false;
+  if (!sheet) {
+    sheet = ss.insertSheet(name, index);
+    created = true;
+  }
+  report.push((created ? "🆕 أنشأت ورقة «" : "🔎 ورقة موجودة «") + name + "»");
+
+  // 1) صف العناوين (لا نكتب فوق عناوين مختلفة موجودة مسبقاً)
+  var headerRange = sheet.getRange(HEADER_ROWS, 1, 1, headers.length);
+  var current = headerRange.getValues()[0].map(function (v) {
+    return str_(v);
+  });
+  var filled = current.filter(function (v) {
+    return v !== "";
+  }).length;
+  var identical = true;
+  for (var i = 0; i < headers.length; i++) {
+    if (current[i] !== headers[i]) identical = false;
+  }
+  if (filled === 0 || identical) {
+    headerRange.setValues([headers]);
+    report.push("   • العناوين: " + headers.join(" | "));
+  } else {
+    report.push("   ⚠️ وجدت عناوين مختلفة في الصف الأول فلم أعدّلها: " + current.join(" | "));
+  }
+
+  // 2) تنسيق العناوين وتثبيت الصف
+  headerRange
+    .setFontWeight("bold")
+    .setBackground("#1f4e5f")
+    .setFontColor("#ffffff")
+    .setHorizontalAlignment("center")
+    .setVerticalAlignment("middle");
+  sheet.setFrozenRows(HEADER_ROWS);
+  try {
+    sheet.setTabColor("#1f4e5f");
+  } catch (err) {
+    // تنسيق اختياري فقط
+  }
+
+  // 3) عرض الأعمدة
+  if (cols.widths) {
+    for (var c = 0; c < cols.widths.length; c++) sheet.setColumnWidth(c + 1, cols.widths[c]);
+  }
+
+  // 4) تنسيق التاريخ والمبلغ
+  var dataRange = sheet.getRange(HEADER_ROWS + 1, 1, SETUP_ROWS, Math.max(cols.paidCol, headers.length));
+  sheet.getRange(HEADER_ROWS + 1, cols.dateCol, SETUP_ROWS, 1).setNumberFormat("yyyy-mm-dd");
+  sheet.getRange(HEADER_ROWS + 1, cols.amountCol, SETUP_ROWS, 1).setNumberFormat("#,##0");
+  try {
+    dataRange.setVerticalAlignment("middle");
+  } catch (err) {
+    // اختياري
+  }
+
+  // 5) خانة الاختيار في عمود «مدفوع»
+  var paidRange = sheet.getRange(HEADER_ROWS + 1, cols.paidCol, SETUP_ROWS, 1);
+  try {
+    paidRange.setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
+  } catch (err) {
+    report.push("   ⚠️ تعذّر ضبط خانة الاختيار: " + err);
+  }
+  try {
+    paidRange.setHorizontalAlignment("center");
+  } catch (err) {
+    // اختياري
+  }
+
+  // 6) تعبئة الخانات الفارغة بـ FALSE حتى تظهر كخانات اختيار غير مفعّلة
+  //    (لا نلمس أي صف مسجّل مدفوعاً مسبقاً)
+  var values = paidRange.getValues();
+  var changed = 0;
+  for (var r = 0; r < values.length; r++) {
+    var v = values[r][0];
+    if (v === "" || v === null || v === undefined) {
+      values[r][0] = false;
+      changed++;
+    }
+  }
+  if (changed) paidRange.setValues(values);
+  report.push("   • خانة اختيار «مدفوع» جاهزة في " + SETUP_ROWS + " صفاً");
+  return report;
+}
+
+/**
+ * 🧪 صفوف تجريبية لاختبار البوت (شهرين + ضريبة سنوية).
+ * تُضاف مرة واحدة فقط إذا كانت الورقتان بلا بيانات. احذف الصفوف بعد الاختبار.
+ */
+function addSampleData() {
+  var ss = getSpreadsheet_();
+  var monthly = ss.getSheetByName(SHEET_MONTHLY);
+  var annual = ss.getSheetByName(SHEET_ANNUAL);
+  if (!monthly || !annual) {
+    throw new Error("شغّل setupSheet أولاً لإنشاء الورقتين.");
+  }
+  if (readMonthly_(monthly).length || readAnnual_(annual).length) {
+    var msg = "ℹ️ توجد بيانات بالفعل في الجدول، لم أضف صفوفاً تجريبية.";
+    Logger.log(msg);
+    return msg;
+  }
+
+  var today = new Date();
+  var y = today.getFullYear();
+  var m = today.getMonth(); // 0 = يناير
+  var day5 = new Date(y, m, 5);
+  var firstOfMonth = new Date(y, m, 1);
+  var firstOfPrevMonth = new Date(y, m - 1, 1);
+
+  // الوحدة | الشقة | الوصل | تاريخ الاستحقاق | المبلغ | مدفوع
+  var monthlyRows = [
+    [1, 1, 1, day5, 1500, false],
+    [2, 5, 2, day5, 1500, false],
+    [1, 1, 1, firstOfPrevMonth, 1500, true], // مثال مدفوع مسبقاً
+    [3, 2, 1, firstOfMonth, 1200, false]
+  ];
+  monthly.getRange(HEADER_ROWS + 1, 1, monthlyRows.length, monthlyRows[0].length).setValues(monthlyRows);
+
+  // الوحدة | تاريخ الاستحقاق | المبلغ | مدفوع
+  var annualRows = [
+    [1, new Date(y, 11, 31), 5000, false],
+    [2, new Date(y, 5, 30), 4800, false]
+  ];
+  annual.getRange(HEADER_ROWS + 1, 1, annualRows.length, annualRows[0].length).setValues(annualRows);
+
+  var msg =
+    "🧪 أُضيفت " +
+    monthlyRows.length +
+    " صفوف تجريبية في «" +
+    SHEET_MONTHLY +
+    "» و" +
+    annualRows.length +
+    " في «" +
+    SHEET_ANNUAL +
+    "».\n" +
+    "شغّل sendTestReminder ثم أرسل للبوت: دفع 1\n" +
+    "⚠️ احذف هذه الصفوف قبل إدخال بياناتك الحقيقية.";
+  Logger.log(msg);
+  return msg;
+}
+
+/* ==========================================================================
+ * 16) أسماء عربية مختصرة (اختيارية) — نفس الدوال، تسهيلاً للاستخدام
  * ========================================================================== */
 
 function حفظ_معرّف_الجدول() {
@@ -1807,4 +2022,10 @@ function اكتشف_رقم_المحادثة() {
 }
 function فحص_الإعدادات() {
   return checkSetup();
+}
+function تهيئة_الجدول() {
+  return setupSheet();
+}
+function إضافة_بيانات_تجريبية() {
+  return addSampleData();
 }

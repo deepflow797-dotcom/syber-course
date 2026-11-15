@@ -6,8 +6,11 @@
  *  تيليجرام المجانية (Bot API).
  *
  *  الخطوات المختصرة (التفصيل خطوة بخطوة في الملف README-ar.md):
- *   0) جدول جديد؟ افتح https://sheets.new ثم الأوامر: الإضافات ← Apps Script،
- *      الصق هذا الملف، وشغّل setupSheet لبناء الورقتين والعناوين وخانات الاختيار.
+ *   0) جدول جديد؟ طريقتان:
+ *      أ) من داخل جدول: افتح https://sheets.new ← الإضافات ← Apps Script ← الصق الملف
+ *         ← شغّل setupSheet.
+ *      ب) من سكربت مستقل (script.google.com): الصق الملف ← شغّل createSpreadsheet
+ *         فينشئ الجدول ويطبع رابطه.
  *   1) الصق هذا الملف كاملاً في محرر Apps Script الملحق بالجدول
  *      (من الجدول: الإضافات ← Apps Script)، ثم اضغط حفظ.
  *   2) شغّل الدالة  saveSpreadsheetId  مرة واحدة من المحرر
@@ -1797,9 +1800,81 @@ var SETUP_ROWS = 1000;
 function setupSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   if (!ss) {
-    throw new Error("افتح جدول Google Sheets أولاً، ثم: الإضافات ← Apps Script ← شغّل setupSheet.");
+    // سكربت مستقل (أُنشئ من script.google.com مباشرة): نجرّب المعرّف المحفوظ
+    var savedId = getProp_(P_SHEET);
+    if (savedId) {
+      try {
+        ss = SpreadsheetApp.openById(savedId);
+      } catch (err) {
+        ss = null;
+      }
+    }
+  }
+  if (!ss) {
+    throw new Error(
+      "لم أجد جدولاً. إن كان سكربتك غير ملحق بجدول (سكربت مستقل): شغّل createSpreadsheet لإنشاء جدول جديد، " +
+        "أو افتح جدولك ثم الإضافات ← Apps Script، أو ضع معرّف الجدول في الخاصية SPREADSHEET_ID."
+    );
+  }
+  return setupSpreadsheet_(ss);
+}
+
+/**
+ * 🆕 تُنشئ جدول Google جديداً باسم «تذكير الضرائب» وتبنيه بالكامل، ثم تطبع رابطه.
+ * مفيدة عندما يكون السكربت مستقلاً (أُنشئ من script.google.com وليس من داخل جدول).
+ * إن كان لديك جدول محفوظ مسبقاً فستجهّزه بدل إنشاء واحد جديد.
+ */
+function createSpreadsheet() {
+  var existingId = getProp_(P_SHEET);
+  if (existingId) {
+    var existing = null;
+    try {
+      existing = SpreadsheetApp.openById(existingId);
+    } catch (err) {
+      existing = null;
+    }
+    if (existing) {
+      var r0 = setupSpreadsheet_(existing);
+      Logger.log("ℹ️ لديك جدول محفوظ مسبقاً — جهّزته بدل إنشاء جدول جديد.");
+      Logger.log("🔗 الرابط: " + existing.getUrl());
+      return r0 + "\n🔗 الرابط: " + existing.getUrl();
+    }
   }
 
+  var ss = SpreadsheetApp.create("تذكير الضرائب");
+  setProp_(P_SHEET, ss.getId());
+  var report = setupSpreadsheet_(ss, true); // الجدول جديد: سنحذف الورقة الافتراضية بأنفسنا
+
+  // حذف الورقة الافتراضية الفارغة (Sheet1 / ورقة1) إن وُجدت
+  var removed = [];
+  try {
+    ss.getSheets().forEach(function (sh) {
+      var nm = sh.getName();
+      if (nm === SHEET_MONTHLY || nm === SHEET_ANNUAL) return;
+      if (sh.getLastRow() <= 1) {
+        removed.push(nm);
+        ss.deleteSheet(sh);
+      }
+    });
+  } catch (err) {
+    removed = [];
+  }
+  if (removed.length) report += "\n🗑️ حذفت الورقة الافتراضية الفارغة: " + removed.join("، ");
+
+  var url = "";
+  try {
+    url = ss.getUrl();
+  } catch (err) {
+    url = "";
+  }
+  report += "\n🔗 رابط الجدول: " + (url || "(افتحه من Google Drive)");
+  report += "\n📌 احتفظ بهذا الرابط — ستستخدمه أيضاً من الجوال والكمبيوتر.";
+  Logger.log("\n" + report);
+  return report;
+}
+
+/** بناء الورقتين داخل جدول محدد (تشترك فيها setupSheet و createSpreadsheet) */
+function setupSpreadsheet_(ss, skipEmptyHint) {
   // نحفظ معرّف الجدول حتى يعمل تطبيق الويب والويب هوك لاحقاً
   if (!getProp_(P_SHEET)) setProp_(P_SHEET, ss.getId());
 
@@ -1835,7 +1910,7 @@ function setupSheet() {
   } catch (err) {
     others = [];
   }
-  if (others.length) {
+  if (others.length && !skipEmptyHint) {
     report.push("💡 يمكنك حذف الورقة الفارغة غير المستخدمة: " + others.join("، "));
   }
 
@@ -2025,6 +2100,9 @@ function فحص_الإعدادات() {
 }
 function تهيئة_الجدول() {
   return setupSheet();
+}
+function إنشاء_جدول_جديد() {
+  return createSpreadsheet();
 }
 function إضافة_بيانات_تجريبية() {
   return addSampleData();
